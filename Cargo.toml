@@ -2,6 +2,11 @@
 name = "zz-validator"
 version = "0.1.0"
 edition = "2024"
+description = "A Rust library for  DSL parsing and data validation."
+license = "GPL-3.0-or-later"
+repository = "https://github.com/Free-Web-Movement/validator.git"
+keywords = ["cryptocurrency", "account", "open"]
+authors = ["Eric <calidion@gmail.com>"]
 
 [dependencies]
 regex = "1.11"
