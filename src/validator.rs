@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use regex::Regex;
-use crate::{ast::{ Constraint, FieldRule, FieldType, Value }, parser::Parser, token::tokenize};
+use crate::{ ast::{ Constraint, FieldRule, FieldType, Value }, parser::Parser, token::tokenize };
 
 /// -----------------------------
 /// Validator
@@ -31,7 +31,13 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<(), String>
     }
 
     let val = val_opt.unwrap();
-
+    if !rule.required {
+        if let Value::String(s) = val {
+            if s.is_empty() {
+                return Ok(());
+            }
+        }
+    }
     // union types 验证
     if let Some(types) = &rule.union_types {
         let mut ok = false;
@@ -287,28 +293,50 @@ fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
 
         FieldType::Ip => {
             let s = value.as_str().ok_or("Not string for ip")?;
-            let re = Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid ip: {}", s)) }
+            let re = Regex::new(
+                r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$"
+            ).unwrap();
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid ip: {}", s))
+            }
         }
         FieldType::Mac => {
             let s = value.as_str().ok_or("Not string for mac")?;
             let re = Regex::new(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid mac: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid mac: {}", s))
+            }
         }
         FieldType::Date => {
             let s = value.as_str().ok_or("Not string for date")?;
             let re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid date: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid date: {}", s))
+            }
         }
         FieldType::DateTime => {
             let s = value.as_str().ok_or("Not string for datetime")?;
             let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid datetime: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid datetime: {}", s))
+            }
         }
         FieldType::Time => {
             let s = value.as_str().ok_or("Not string for time")?;
             let re = Regex::new(r"^\d{2}:\d{2}:\d{2}$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid time: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid time: {}", s))
+            }
         }
         FieldType::Timestamp => {
             value.as_int().ok_or("Not number for timestamp")?;
@@ -317,27 +345,49 @@ fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
         FieldType::Color => {
             let s = value.as_str().ok_or("Not string for color")?;
             let re = Regex::new(r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid color: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid color: {}", s))
+            }
         }
         FieldType::Hostname => {
             let s = value.as_str().ok_or("Not string for hostname")?;
-            let re = Regex::new(r"^(?=.{1,253}$)(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid hostname: {}", s)) }
+            let re = Regex::new(
+                r"^(?=.{1,253}$)(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$"
+            ).unwrap();
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid hostname: {}", s))
+            }
         }
         FieldType::Slug => {
             let s = value.as_str().ok_or("Not string for slug")?;
             let re = Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid slug: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid slug: {}", s))
+            }
         }
         FieldType::Hex => {
             let s = value.as_str().ok_or("Not string for hex")?;
             let re = Regex::new(r"^[0-9a-fA-F]+$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid hex: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid hex: {}", s))
+            }
         }
         FieldType::Base64 => {
             let s = value.as_str().ok_or("Not string for base64")?;
             let re = Regex::new(r"^[A-Za-z0-9+/]+={0,2}$").unwrap();
-            if re.is_match(s) { Ok(()) } else { Err(format!("Invalid base64: {}", s)) }
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(format!("Invalid base64: {}", s))
+            }
         }
         FieldType::Password => {
             if value.as_str().is_some() { Ok(()) } else { Err("Not string for password".into()) }
@@ -359,25 +409,30 @@ pub fn validate_object(value: &mut Value, rules: &[FieldRule]) -> Result<(), Str
     }
 }
 
-
 pub fn validate_rule(rule_str: &str, value_str: &str) -> bool {
     // 1. 词法分析
     let tokens = match tokenize(rule_str) {
         Ok(t) => t,
-        Err(_) => return false,
+        Err(_) => {
+            return false;
+        }
     };
 
     // 2. 解析完整规则 (nameless = false)
     let mut parser = Parser::new(tokens);
     let rule_ast = match parser.parse_field(false) {
         Ok(r) => r,
-        Err(_) => return false,
+        Err(_) => {
+            return false;
+        }
     };
 
     // 3. 将输入字符串转换为对应的 Value 枚举
     let val_enum = match convert_input_to_value(value_str, &rule_ast.field_type) {
         Ok(v) => v,
-        Err(_) => return false,
+        Err(_) => {
+            return false;
+        }
     };
 
     // 4. 构造上下文对象供 Validator 查找对应字段
@@ -391,13 +446,24 @@ pub fn validate_rule(rule_str: &str, value_str: &str) -> bool {
 
 fn convert_input_to_value(input: &str, target_type: &FieldType) -> Result<Value, String> {
     match target_type {
-        FieldType::Int => input.parse::<i64>().map(Value::Int).map_err(|e| e.to_string()),
-        FieldType::Float => input.parse::<f64>().map(Value::Float).map_err(|e| e.to_string()),
-        FieldType::Bool => match input {
-            "true" => Ok(Value::Bool(true)),
-            "false" => Ok(Value::Bool(false)),
-            _ => Err("Invalid bool".into()),
-        },
+        FieldType::Int =>
+            input
+                .parse::<i64>()
+                .map(Value::Int)
+                .map_err(|e| e.to_string()),
+        FieldType::Float =>
+            input
+                .parse::<f64>()
+                .map(Value::Float)
+                .map_err(|e| e.to_string()),
+        FieldType::Bool => {
+            // 统一转为小写进行不区分大小写的匹配
+            match input.to_lowercase().as_str() {
+                "true" | "1" => Ok(Value::Bool(true)),
+                "false" | "0" => Ok(Value::Bool(false)),
+                _ => Err("Invalid boolean value".into()),
+            }
+        }
         _ => Ok(Value::String(input.to_string())),
     }
 }
