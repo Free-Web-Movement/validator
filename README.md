@@ -18,16 +18,16 @@ ZZ-Validator DSL 是一种轻量级的描述语言，用于定义 JSON/对象字
 字段定义格式：
 
 ```dsl
-<name>:<type>[<constraints>] = <default> ?
+<name>?:<type>[<constraints>] = <default>
 ```
 
 ### 各部分含义
 
 - `name`：字段名
+- `?`：表示字段可选，不带`?`表示字段必须存在
 - `type`：字段类型
 - `[constraints]`：可选约束，如长度、范围、正则
 - `= <default>`：可选默认值
-- `?`：可选字段
 
 ---
 
