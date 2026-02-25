@@ -1,6 +1,6 @@
 use crate::{
-    ast::{ Constraint, Constraints, FieldRule, FieldType, Value },
-    token::{ Token, tokenize },
+    ast::{Constraint, Constraints, FieldRule, FieldType, Value},
+    token::{Token, tokenize},
 };
 
 /// -----------------------------
@@ -88,35 +88,34 @@ impl Parser {
         let mut union_types = Vec::new();
         loop {
             let ty = match self.next() {
-                Some(Token::Ident(s)) =>
-                    match s.as_str() {
-                        "string" => FieldType::String,
-                        "int" => FieldType::Int,
-                        "float" => FieldType::Float,
-                        "bool" => FieldType::Bool,
-                        "object" => FieldType::Object,
-                        "array" => FieldType::Array,
-                        "email" => FieldType::Email,
-                        "uri" => FieldType::Uri,
-                        "uuid" => FieldType::Uuid,
-                        "ip" => FieldType::Ip,
-                        "mac" => FieldType::Mac,
-                        "date" => FieldType::Date,
-                        "datetime" => FieldType::DateTime,
-                        "time" => FieldType::Time,
-                        "timestamp" => FieldType::Timestamp,
-                        "color" => FieldType::Color,
-                        "hostname" => FieldType::Hostname,
-                        "slug" => FieldType::Slug,
-                        "hex" => FieldType::Hex,
-                        "base64" => FieldType::Base64,
-                        "password" => FieldType::Password,
-                        "token" => FieldType::Token,
+                Some(Token::Ident(s)) => match s.as_str() {
+                    "string" => FieldType::String,
+                    "int" => FieldType::Int,
+                    "float" => FieldType::Float,
+                    "bool" => FieldType::Bool,
+                    "object" => FieldType::Object,
+                    "array" => FieldType::Array,
+                    "email" => FieldType::Email,
+                    "uri" => FieldType::Uri,
+                    "uuid" => FieldType::Uuid,
+                    "ip" => FieldType::Ip,
+                    "mac" => FieldType::Mac,
+                    "date" => FieldType::Date,
+                    "datetime" => FieldType::DateTime,
+                    "time" => FieldType::Time,
+                    "timestamp" => FieldType::Timestamp,
+                    "color" => FieldType::Color,
+                    "hostname" => FieldType::Hostname,
+                    "slug" => FieldType::Slug,
+                    "hex" => FieldType::Hex,
+                    "base64" => FieldType::Base64,
+                    "password" => FieldType::Password,
+                    "token" => FieldType::Token,
 
-                        t => {
-                            return Err(format!("Unknown type {}", t));
-                        }
+                    t => {
+                        return Err(format!("Unknown type {}", t));
                     }
+                },
                 t => {
                     return Err(format!("Expected type, got {:?}", t));
                 }
@@ -149,20 +148,18 @@ impl Parser {
             // 使用 nameless=true 避免重复解析字段名，但保留 FieldType、constraints 等
             let sub = self.parse_field(true)?;
             // 父级 array 的 rule 指向这个子规则
-            sub_rule = Some(
-                Box::new(FieldRule {
-                    field: String::new(), // nameless
-                    field_type: sub.field_type,
-                    required: sub.required,
-                    default: sub.default,
-                    enum_values: sub.enum_values,
-                    union_types: sub.union_types,
-                    constraints: sub.constraints,
-                    rule: sub.rule,
-                    children: sub.children,
-                    is_array: sub.is_array,
-                })
-            );
+            sub_rule = Some(Box::new(FieldRule {
+                field: String::new(), // nameless
+                field_type: sub.field_type,
+                required: sub.required,
+                default: sub.default,
+                enum_values: sub.enum_values,
+                union_types: sub.union_types,
+                constraints: sub.constraints,
+                rule: sub.rule,
+                children: sub.children,
+                is_array: sub.is_array,
+            }));
             self.expect(&Token::Gt)?;
         }
 
@@ -236,10 +233,8 @@ impl Parser {
                         match self.next() {
                             Some(Token::Number(s)) => {
                                 // 根据当前的 field_type 转换数字
-                                let v = self.parse_token_number_as_type(
-                                    &Token::Number(s),
-                                    &field_type
-                                )?;
+                                let v = self
+                                    .parse_token_number_as_type(&Token::Number(s), &field_type)?;
                                 vals.push(v);
                             }
                             Some(Token::Ident(v)) => {
@@ -281,9 +276,15 @@ impl Parser {
                     self.next();
                     let token = self.next().ok_or("Expected default value")?;
 
-                    let val = match token {
+let val = match token {
                         Token::Number(s) => {
-                            self.parse_token_number_as_type(&Token::Number(s), &field_type)?
+                            // 关键修正：如果字段是 string，默认值直接存为 Value::String
+                            if field_type == FieldType::String {
+                                Value::String(s)
+                            } else {
+                                // 只有非 string 类型（如 int/float）才走数值解析
+                                self.parse_token_number_as_type(&Token::Number(s), &field_type)?
+                            }
                         }
                         Token::Ident(s) => {
                             if field_type == FieldType::Bool {
@@ -295,6 +296,7 @@ impl Parser {
                                     }
                                 }
                             } else {
+                                // 字段是 string 时，Ident 也是字符串
                                 Value::String(s)
                             }
                         }
@@ -315,11 +317,7 @@ impl Parser {
         Ok(FieldRule {
             field: name,
             field_type,
-            required: if nameless {
-                true
-            } else {
-                !optional
-            },
+            required: if nameless { true } else { !optional },
             default,
             enum_values,
             union_types: if union_types.len() > 1 {
@@ -342,40 +340,64 @@ impl Parser {
     fn parse_token_number_as_type(
         &self,
         token: &Token,
-        field_type: &FieldType
+        field_type: &FieldType,
     ) -> Result<Value, String> {
         match token {
-            Token::Number(s) =>
+            Token::Number(s) => {
                 match field_type {
-                    FieldType::String => Ok(Value::String(s.to_string())), // <- 允许数字作为 String
+                    // 如果目标是 Int，允许输入浮点字符串，先解析为 f64
                     FieldType::Int => {
-                        s.parse::<i64>()
-                            .map(Value::Int)
-                            .map_err(|_| format!("Invalid integer '{}'", s))
+                        if let Ok(i) = s.parse::<i64>() {
+                            Ok(Value::Int(i))
+                        } else if let Ok(f) = s.parse::<f64>() {
+                            // 暂时返回 Float，由 parse_range 进行后续的 ceil/floor 处理
+                            Ok(Value::Float(f))
+                        } else {
+                            Err(format!("Invalid integer '{}'", s))
+                        }
                     }
-                    FieldType::Float => {
-                        s.parse::<f64>()
-                            .map(Value::Float)
-                            .map_err(|_| format!("Invalid float '{}'", s))
-                    }
-                    _ => Err(format!("Field type {:?} cannot parse number", field_type)),
+                    FieldType::Float => s
+                        .parse::<f64>()
+                        .map(Value::Float)
+                        .map_err(|_| format!("Invalid float '{}'", s)),
+                    // 如果是 String 类型，Range 通常代表长度，所以也支持数字解析
+                    FieldType::String => s
+                        .parse::<i64>()
+                        .map(Value::Int)
+                        .map_err(|_| format!("Invalid length number '{}'", s)),
+                    _ => Err(format!(
+                        "Range only supports int/float/string, got {:?}",
+                        field_type
+                    )),
                 }
-            _ => Err(format!("Expected number token, got {:?}", token)),
+            }
+            _ => Err("Expected a number token".into()),
         }
     }
 
-    /// Range 解析，支持 int/float
+    /// Range 解析，支持 int/float 并对 int 类型进行向内取整
     fn parse_range(&mut self, field_type: &FieldType) -> Result<Constraint, String> {
         let min_inclusive = matches!(self.peek(), Some(Token::LBracket));
-        self.next();
+        self.next(); // 消耗 [ 或 (
 
         let min_token = self.next().ok_or("Expected min number")?;
-        let min = self.parse_token_number_as_type(&min_token, field_type)?;
+        let mut min = self.parse_token_number_as_type(&min_token, field_type)?;
 
         self.expect(&Token::Comma)?;
 
         let max_token = self.next().ok_or("Expected max number")?;
-        let max = self.parse_token_number_as_type(&max_token, field_type)?;
+        let mut max = self.parse_token_number_as_type(&max_token, field_type)?;
+
+        // --- 逻辑核心：如果字段是 Int，将边界向内取整 ---
+        if let FieldType::Int = field_type {
+            if let Value::Float(f) = min {
+                min = Value::Int(f.ceil() as i64); // 1.2 -> 2
+            }
+            if let Value::Float(f) = max {
+                max = Value::Int(f.floor() as i64); // 5.8 -> 5
+            }
+        }
+        // ------------------------------------------
 
         let max_inclusive = match self.next() {
             Some(Token::RBracket) => true,
@@ -385,7 +407,12 @@ impl Parser {
             }
         };
 
-        Ok(Constraint::Range { min, max, min_inclusive, max_inclusive })
+        Ok(Constraint::Range {
+            min,
+            max,
+            min_inclusive,
+            max_inclusive,
+        })
     }
 
     pub fn parse_rules(input: &str) -> Result<Vec<FieldRule>, String> {

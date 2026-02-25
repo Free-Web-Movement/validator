@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
+use crate::{
+    ast::{Constraint, FieldRule, FieldType, Value},
+    parser::Parser,
+    token::tokenize,
+};
 use regex::Regex;
-use crate::{ ast::{ Constraint, FieldRule, FieldType, Value }, parser::Parser, token::tokenize };
 
 /// -----------------------------
 /// Validator
@@ -48,21 +52,24 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<(), String>
             }
         }
         if !ok {
-            return Err(
-                format!("{} value {:?} does not match union types {:?}", rule.field, val, types)
-            );
+            return Err(format!(
+                "{} value {:?} does not match union types {:?}",
+                rule.field, val, types
+            ));
         }
     } else {
         // validate_type(val, &rule.field_type)?;
-        validate_type(val, &rule.field_type).map_err(|e|
-            format!("{} value {:?}: {}", rule.field, val, e)
-        )?;
+        validate_type(val, &rule.field_type)
+            .map_err(|e| format!("{} value {:?}: {}", rule.field, val, e))?;
     }
 
     // enum 验证
     if let Some(enum_vals) = &rule.enum_values {
         if !enum_vals.contains(val) {
-            return Err(format!("{} value {:?} not in enum {:?}", rule.field, val, enum_vals));
+            return Err(format!(
+                "{} value {:?} not in enum {:?}",
+                rule.field, val, enum_vals
+            ));
         }
     }
 
@@ -70,46 +77,54 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<(), String>
     if let Some(c) = &rule.constraints {
         for con in &c.items {
             match con {
-                Constraint::Range { min, max, min_inclusive, max_inclusive } => {
+                Constraint::Range {
+                    min,
+                    max,
+                    min_inclusive,
+                    max_inclusive,
+                } => {
                     match val {
                         Value::Int(i) => {
                             let n = *i as f64;
+                            // --- 逻辑修正：最小值向上取整，最大值向下取整 ---
                             let min_v = match min {
                                 Value::Int(mi) => *mi as f64,
-                                Value::Float(mf) => *mf,
+                                Value::Float(mf) => mf.ceil(), // 1.2 -> 2.0
                                 _ => {
-                                    return Err(
-                                        format!(
-                                            "Invalid min value type in range for {}",
-                                            rule.field
-                                        )
-                                    );
+                                    return Err(format!(
+                                        "Invalid min value type for {}",
+                                        rule.field
+                                    ));
                                 }
                             };
                             let max_v = match max {
                                 Value::Int(mi) => *mi as f64,
-                                Value::Float(mf) => *mf,
+                                Value::Float(mf) => mf.floor(), // 5.8 -> 5.0
                                 _ => {
-                                    return Err(
-                                        format!(
-                                            "Invalid max value type in range for {}",
-                                            rule.field
-                                        )
-                                    );
+                                    return Err(format!(
+                                        "Invalid max value type for {}",
+                                        rule.field
+                                    ));
                                 }
                             };
-                            let min_ok = if *min_inclusive { n >= min_v } else { n > min_v };
-                            let max_ok = if *max_inclusive { n <= max_v } else { n < max_v };
+                            // ------------------------------------------
+
+                            let min_ok = if *min_inclusive {
+                                n >= min_v
+                            } else {
+                                n > min_v
+                            };
+                            let max_ok = if *max_inclusive {
+                                n <= max_v
+                            } else {
+                                n < max_v
+                            };
+
                             if !min_ok || !max_ok {
-                                return Err(
-                                    format!(
-                                        "{} value {:?} out of range [{:?}, {:?}]",
-                                        rule.field,
-                                        val,
-                                        min,
-                                        max
-                                    )
-                                );
+                                return Err(format!(
+                                    "{} value {} out of range [{}, {}]",
+                                    rule.field, i, min_v, max_v
+                                ));
                             }
                         }
                         Value::Float(f) => {
@@ -118,38 +133,37 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<(), String>
                                 Value::Int(mi) => *mi as f64,
                                 Value::Float(mf) => *mf,
                                 _ => {
-                                    return Err(
-                                        format!(
-                                            "Invalid min value type in range for {}",
-                                            rule.field
-                                        )
-                                    );
+                                    return Err(format!(
+                                        "Invalid min value type in range for {}",
+                                        rule.field
+                                    ));
                                 }
                             };
                             let max_v = match max {
                                 Value::Int(mi) => *mi as f64,
                                 Value::Float(mf) => *mf,
                                 _ => {
-                                    return Err(
-                                        format!(
-                                            "Invalid max value type in range for {}",
-                                            rule.field
-                                        )
-                                    );
+                                    return Err(format!(
+                                        "Invalid max value type in range for {}",
+                                        rule.field
+                                    ));
                                 }
                             };
-                            let min_ok = if *min_inclusive { n >= min_v } else { n > min_v };
-                            let max_ok = if *max_inclusive { n <= max_v } else { n < max_v };
+                            let min_ok = if *min_inclusive {
+                                n >= min_v
+                            } else {
+                                n > min_v
+                            };
+                            let max_ok = if *max_inclusive {
+                                n <= max_v
+                            } else {
+                                n < max_v
+                            };
                             if !min_ok || !max_ok {
-                                return Err(
-                                    format!(
-                                        "{} value {:?} out of range [{:?}, {:?}]",
-                                        rule.field,
-                                        val,
-                                        min,
-                                        max
-                                    )
-                                );
+                                return Err(format!(
+                                    "{} value {:?} out of range [{:?}, {:?}]",
+                                    rule.field, val, min, max
+                                ));
                             }
                         }
                         Value::String(s) => {
@@ -157,57 +171,57 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<(), String>
                             // min/max 可以是 Value::Int 或 Value::String
                             let min_v = match min {
                                 Value::Int(mi) => *mi as usize,
-                                Value::String(s) =>
-                                    s
-                                        .parse::<usize>()
-                                        .map_err(|_| format!("Failed to parse '{}' as usize", s))?,
+                                Value::String(s) => s
+                                    .parse::<usize>()
+                                    .map_err(|_| format!("Failed to parse '{}' as usize", s))?,
                                 _ => {
-                                    return Err(
-                                        format!(
-                                            "Invalid min value type in range for {}",
-                                            rule.field
-                                        )
-                                    );
+                                    return Err(format!(
+                                        "Invalid min value type in range for {}",
+                                        rule.field
+                                    ));
                                 }
                             };
                             let max_v = match max {
                                 Value::Int(mi) => *mi as usize,
-                                Value::String(s) =>
-                                    s
-                                        .parse::<usize>()
-                                        .map_err(|_| format!("Failed to parse '{}' as usize", s))?,
+                                Value::String(s) => s
+                                    .parse::<usize>()
+                                    .map_err(|_| format!("Failed to parse '{}' as usize", s))?,
                                 _ => {
-                                    return Err(
-                                        format!(
-                                            "Invalid max value type in range for {}",
-                                            rule.field
-                                        )
-                                    );
+                                    return Err(format!(
+                                        "Invalid max value type in range for {}",
+                                        rule.field
+                                    ));
                                 }
                             };
-                            let min_ok = if *min_inclusive { n >= min_v } else { n > min_v };
-                            let max_ok = if *max_inclusive { n <= max_v } else { n < max_v };
+                            let min_ok = if *min_inclusive {
+                                n >= min_v
+                            } else {
+                                n > min_v
+                            };
+                            let max_ok = if *max_inclusive {
+                                n <= max_v
+                            } else {
+                                n < max_v
+                            };
                             if !min_ok || !max_ok {
-                                return Err(
-                                    format!(
-                                        "{} length {} out of range [{:?}, {:?}]",
-                                        rule.field,
-                                        n,
-                                        min,
-                                        max
-                                    )
-                                );
+                                return Err(format!(
+                                    "{} length {} out of range [{:?}, {:?}]",
+                                    rule.field, n, min, max
+                                ));
                             }
                         }
                         _ => {
-                            return Err(
-                                format!("{} cannot apply range constraint to {:?}", rule.field, val)
-                            );
+                            return Err(format!(
+                                "{} cannot apply range constraint to {:?}",
+                                rule.field, val
+                            ));
                         }
                     }
                 }
                 Constraint::Regex(pattern) => {
-                    let s = val.as_str().ok_or(format!("{} not string for regex", rule.field))?;
+                    let s = val
+                        .as_str()
+                        .ok_or(format!("{} not string for regex", rule.field))?;
                     let re = Regex::new(pattern).map_err(|e| format!("Invalid regex: {}", e))?;
                     if !re.is_match(s) {
                         return Err(format!("{} regex mismatch: {}", rule.field, pattern));
@@ -243,29 +257,49 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<(), String>
     Ok(())
 }
 
-fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
+pub fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
     match t {
-        FieldType::String => if value.as_str().is_some() {
-            Ok(())
-        } else {
-            Err("Not string".into())
+        FieldType::String => {
+            if value.as_str().is_some() {
+                Ok(())
+            } else {
+                Err("Not string".into())
+            }
         }
-        FieldType::Int => if value.as_int().is_some() { Ok(()) } else { Err("Not int".into()) }
-        FieldType::Float => if value.as_float().is_some() {
-            Ok(())
-        } else {
-            Err("Not float".into())
+        FieldType::Int => {
+            if value.as_int().is_some() {
+                Ok(())
+            } else {
+                Err("Not int".into())
+            }
         }
-        FieldType::Bool => if value.as_bool().is_some() { Ok(()) } else { Err("Not bool".into()) }
-        FieldType::Object => if value.as_object().is_some() {
-            Ok(())
-        } else {
-            Err("Not object".into())
+        FieldType::Float => {
+            if value.as_float().is_some() {
+                Ok(())
+            } else {
+                Err("Not float".into())
+            }
         }
-        FieldType::Array => if value.as_array().is_some() {
-            Ok(())
-        } else {
-            Err("Not array".into())
+        FieldType::Bool => {
+            if value.as_bool().is_some() {
+                Ok(())
+            } else {
+                Err("Not bool".into())
+            }
+        }
+        FieldType::Object => {
+            if value.as_object().is_some() {
+                Ok(())
+            } else {
+                Err("Not object".into())
+            }
+        }
+        FieldType::Array => {
+            if value.as_array().is_some() {
+                Ok(())
+            } else {
+                Err("Not array".into())
+            }
         }
         FieldType::Email => {
             let s = value.as_str().ok_or("Not string for email")?;
@@ -293,9 +327,9 @@ fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
 
         FieldType::Ip => {
             let s = value.as_str().ok_or("Not string for ip")?;
-            let re = Regex::new(
-                r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$"
-            ).unwrap();
+            let re =
+                Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$")
+                    .unwrap();
             if re.is_match(s) {
                 Ok(())
             } else {
@@ -353,9 +387,16 @@ fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
         }
         FieldType::Hostname => {
             let s = value.as_str().ok_or("Not string for hostname")?;
+            // 1. 手动检查总长度 (对应原正则中的 (?=.{1,253}$) )
+            if s.is_empty() || s.len() > 253 {
+                return Err(format!("Invalid hostname length: {}", s));
+            }
+            // 2. 使用不含断言的兼容正则
             let re = Regex::new(
-                r"^(?=.{1,253}$)(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$"
-            ).unwrap();
+                r"^(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$",
+            )
+            .unwrap();
+
             if re.is_match(s) {
                 Ok(())
             } else {
@@ -390,10 +431,18 @@ fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
             }
         }
         FieldType::Password => {
-            if value.as_str().is_some() { Ok(()) } else { Err("Not string for password".into()) }
+            if value.as_str().is_some() {
+                Ok(())
+            } else {
+                Err("Not string for password".into())
+            }
         }
         FieldType::Token => {
-            if value.as_str().is_some() { Ok(()) } else { Err("Not string for token".into()) }
+            if value.as_str().is_some() {
+                Ok(())
+            } else {
+                Err("Not string for token".into())
+            }
         }
     }
 }
@@ -446,16 +495,14 @@ pub fn validate_rule(rule_str: &str, value_str: &str) -> bool {
 
 fn convert_input_to_value(input: &str, target_type: &FieldType) -> Result<Value, String> {
     match target_type {
-        FieldType::Int =>
-            input
-                .parse::<i64>()
-                .map(Value::Int)
-                .map_err(|e| e.to_string()),
-        FieldType::Float =>
-            input
-                .parse::<f64>()
-                .map(Value::Float)
-                .map_err(|e| e.to_string()),
+        FieldType::Int => input
+            .parse::<i64>()
+            .map(Value::Int)
+            .map_err(|e| e.to_string()),
+        FieldType::Float => input
+            .parse::<f64>()
+            .map(Value::Float)
+            .map_err(|e| e.to_string()),
         FieldType::Bool => {
             // 统一转为小写进行不区分大小写的匹配
             match input.to_lowercase().as_str() {
