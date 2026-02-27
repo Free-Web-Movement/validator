@@ -9,8 +9,6 @@ mod range_error_tests {
         validator::validate_field,
     };
 
-    use super::*;
-
     fn parse_rule(rule_str: &str) -> FieldRule {
         let tokens = tokenize(rule_str).unwrap();
         let mut parser = Parser::new(tokens);

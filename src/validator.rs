@@ -311,7 +311,7 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<(), String> {
         }
         FieldType::Uri => {
             let s = value.as_str().ok_or("Not string for uri")?;
-            let url = url::Url::parse(s).map_err(|_| format!("{} is not a valid URI", s))?;
+            let _url = url::Url::parse(s).map_err(|_| format!("{} is not a valid URI", s))?;
             Ok(())
         }
         FieldType::Uuid => {

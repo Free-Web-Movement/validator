@@ -2,7 +2,6 @@
 mod tests {
     use zz_validator::ast::{Constraint, Constraints, FieldRule, FieldType, Value};
 
-    use super::*;
     use std::collections::HashMap;
 
     #[test]
@@ -27,7 +26,7 @@ mod tests {
     #[test]
     fn test_value_conversions() {
         // 1. String
-        let mut v_str = Value::String("hello".to_string());
+        let v_str = Value::String("hello".to_string());
         assert_eq!(v_str.as_str(), Some("hello"));
         assert_eq!(v_str.as_int(), None); // 测试错误分支
         assert!(format!("{:?}", v_str).contains("String"));
