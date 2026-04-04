@@ -71,18 +71,42 @@ mod tests {
         // --- 情况 A: 左开右闭 (0, 100] ---
         // 规则含义：x > 0 且 x <= 100
         let rule_a = "val:int(0, 100]";
-        assert!(!validate_rule(rule_a, "0"), "Left exclusive failed: 0 should be invalid");
-        assert!(validate_rule(rule_a, "1"), "Left exclusive failed: 1 should be valid");
-        assert!(validate_rule(rule_a, "100"), "Right inclusive failed: 100 should be valid");
-        assert!(!validate_rule(rule_a, "101"), "Right inclusive failed: 101 should be invalid");
+        assert!(
+            !validate_rule(rule_a, "0"),
+            "Left exclusive failed: 0 should be invalid"
+        );
+        assert!(
+            validate_rule(rule_a, "1"),
+            "Left exclusive failed: 1 should be valid"
+        );
+        assert!(
+            validate_rule(rule_a, "100"),
+            "Right inclusive failed: 100 should be valid"
+        );
+        assert!(
+            !validate_rule(rule_a, "101"),
+            "Right inclusive failed: 101 should be invalid"
+        );
 
         // --- 情况 B: 左闭右开 [1, 100) ---
         // 规则含义：x >= 1 且 x < 100
         let rule_b = "val:int[1, 100)";
-        assert!(validate_rule(rule_b, "1"), "Left inclusive failed: 1 should be valid");
-        assert!(!validate_rule(rule_b, "0"), "Left inclusive failed: 0 should be invalid");
-        assert!(validate_rule(rule_b, "99"), "Right exclusive failed: 99 should be valid");
-        assert!(!validate_rule(rule_b, "100"), "Right exclusive failed: 100 should be invalid");
+        assert!(
+            validate_rule(rule_b, "1"),
+            "Left inclusive failed: 1 should be valid"
+        );
+        assert!(
+            !validate_rule(rule_b, "0"),
+            "Left inclusive failed: 0 should be invalid"
+        );
+        assert!(
+            validate_rule(rule_b, "99"),
+            "Right exclusive failed: 99 should be valid"
+        );
+        assert!(
+            !validate_rule(rule_b, "100"),
+            "Right exclusive failed: 100 should be invalid"
+        );
     }
 
     #[test]
@@ -210,7 +234,10 @@ mod tests {
         // 2. 超出范围的数字
         assert!(!validate_rule(rule, "2"), "Should not accept '2'");
         assert!(!validate_rule(rule, "-1"), "Should not accept '-1'");
-        assert!(!validate_rule(rule, "0.0"), "Should not accept float '0.0' for bool");
+        assert!(
+            !validate_rule(rule, "0.0"),
+            "Should not accept float '0.0' for bool"
+        );
 
         // 3. 空值与乱码
         assert!(!validate_rule(rule, ""), "Empty string is not a bool");
@@ -230,8 +257,14 @@ mod tests {
         assert!(validate_rule(rule, "FALSE")); // 正常通过
         assert!(validate_rule(rule, "0")); // 正常通过
 
-        assert!(!validate_rule(rule, "true"), "Should fail because enum only allows false");
-        assert!(!validate_rule(rule, "1"), "Should fail because enum only allows false (via 1)");
+        assert!(
+            !validate_rule(rule, "true"),
+            "Should fail because enum only allows false"
+        );
+        assert!(
+            !validate_rule(rule, "1"),
+            "Should fail because enum only allows false (via 1)"
+        );
     }
 
     // #[test]
@@ -292,6 +325,9 @@ mod tests {
         // 传入有效值
         assert!(validate_rule(rule, "admin"));
         // 传入空字符（模拟缺失，触发默认值）
-        assert!(validate_rule(rule, ""), "Empty input should trigger default and pass");
+        assert!(
+            validate_rule(rule, ""),
+            "Empty input should trigger default and pass"
+        );
     }
 }

@@ -8,12 +8,28 @@ mod tests {
     fn test_field_type_variants() {
         // 覆盖 FieldType 所有变体及其 Debug/PartialEq 派生
         let types = vec![
-            FieldType::String, FieldType::Int, FieldType::Float, FieldType::Bool,
-            FieldType::Object, FieldType::Array, FieldType::Email, FieldType::Uri,
-            FieldType::Uuid, FieldType::Ip, FieldType::Mac, FieldType::Date,
-            FieldType::DateTime, FieldType::Time, FieldType::Timestamp,
-            FieldType::Color, FieldType::Hostname, FieldType::Slug,
-            FieldType::Hex, FieldType::Base64, FieldType::Password, FieldType::Token,
+            FieldType::String,
+            FieldType::Int,
+            FieldType::Float,
+            FieldType::Bool,
+            FieldType::Object,
+            FieldType::Array,
+            FieldType::Email,
+            FieldType::Uri,
+            FieldType::Uuid,
+            FieldType::Ip,
+            FieldType::Mac,
+            FieldType::Date,
+            FieldType::DateTime,
+            FieldType::Time,
+            FieldType::Timestamp,
+            FieldType::Color,
+            FieldType::Hostname,
+            FieldType::Slug,
+            FieldType::Hex,
+            FieldType::Base64,
+            FieldType::Password,
+            FieldType::Token,
         ];
 
         for t in &types {
@@ -72,7 +88,7 @@ mod tests {
             max_inclusive: false,
         };
         let regex = Constraint::Regex(".*".to_string());
-        
+
         let constraints = Constraints {
             items: vec![c.clone(), regex.clone()],
         };

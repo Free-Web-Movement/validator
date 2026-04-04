@@ -12,8 +12,8 @@ pub enum FieldType {
     Object,
     Array,
     Email, // 新增
-    Uri, // 新增
-    Uuid, // 新增
+    Uri,   // 新增
+    Uuid,  // 新增
     Ip,
     Mac,
     Date,
@@ -60,28 +60,60 @@ pub enum Value {
 
 impl Value {
     pub fn as_str(&self) -> Option<&str> {
-        if let Value::String(s) = self { Some(s) } else { None }
+        if let Value::String(s) = self {
+            Some(s)
+        } else {
+            None
+        }
     }
     pub fn as_int(&self) -> Option<i64> {
-        if let Value::Int(i) = self { Some(*i) } else { None }
+        if let Value::Int(i) = self {
+            Some(*i)
+        } else {
+            None
+        }
     }
     pub fn as_float(&self) -> Option<f64> {
-        if let Value::Float(f) = self { Some(*f) } else { None }
+        if let Value::Float(f) = self {
+            Some(*f)
+        } else {
+            None
+        }
     }
     pub fn as_bool(&self) -> Option<bool> {
-        if let Value::Bool(b) = self { Some(*b) } else { None }
+        if let Value::Bool(b) = self {
+            Some(*b)
+        } else {
+            None
+        }
     }
     pub fn as_object(&self) -> Option<&HashMap<String, Value>> {
-        if let Value::Object(m) = self { Some(m) } else { None }
+        if let Value::Object(m) = self {
+            Some(m)
+        } else {
+            None
+        }
     }
     pub fn as_object_mut(&mut self) -> Option<&mut HashMap<String, Value>> {
-        if let Value::Object(m) = self { Some(m) } else { None }
+        if let Value::Object(m) = self {
+            Some(m)
+        } else {
+            None
+        }
     }
     pub fn as_array(&self) -> Option<&Vec<Value>> {
-        if let Value::Array(a) = self { Some(a) } else { None }
+        if let Value::Array(a) = self {
+            Some(a)
+        } else {
+            None
+        }
     }
     pub fn as_array_mut(&mut self) -> Option<&mut Vec<Value>> {
-        if let Value::Array(a) = self { Some(a) } else { None }
+        if let Value::Array(a) = self {
+            Some(a)
+        } else {
+            None
+        }
     }
 }
 

@@ -2,8 +2,12 @@
 mod string_range_error_tests {
     use std::collections::HashMap;
 
-    use zz_validator::{ast::{Constraint, Constraints, FieldRule, Value}, parser::Parser, token::tokenize, validator::validate_field};
-
+    use zz_validator::{
+        ast::{Constraint, Constraints, FieldRule, Value},
+        parser::Parser,
+        token::tokenize,
+        validator::validate_field,
+    };
 
     fn parse_rule(rule_str: &str) -> FieldRule {
         let tokens = tokenize(rule_str).unwrap();
@@ -19,7 +23,7 @@ mod string_range_error_tests {
         let mut map = HashMap::new();
         map.insert("username".to_string(), Value::String("ab".into())); // 长度为 2
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("length 2 out of range"));
@@ -33,7 +37,7 @@ mod string_range_error_tests {
         let mut map = HashMap::new();
         map.insert("tag".to_string(), Value::String("abcdef".into())); // 长度为 6
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("length 6 out of range"));
@@ -47,7 +51,7 @@ mod string_range_error_tests {
         let mut map = HashMap::new();
         map.insert("code".to_string(), Value::String("abc".into())); // 长度刚好为 3，本应报错
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("length 3 out of range"));
@@ -65,13 +69,13 @@ mod string_range_error_tests {
                 max: Value::Int(10),
                 min_inclusive: true,
                 max_inclusive: true,
-            }]
+            }],
         });
 
         let mut map = HashMap::new();
         map.insert("name".to_string(), Value::String("test".into()));
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("Invalid min value type in range"));
@@ -89,13 +93,13 @@ mod string_range_error_tests {
                 max: Value::Int(10),
                 min_inclusive: true,
                 max_inclusive: true,
-            }]
+            }],
         });
 
         let mut map = HashMap::new();
         map.insert("note".to_string(), Value::String("hello".into()));
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("Failed to parse 'five' as usize"));
@@ -110,7 +114,7 @@ mod string_range_error_tests {
         // 错误案例：长度为 4，超过 3
         map.insert("code".to_string(), Value::String("abcd".into()));
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("length 4 out of range"));
@@ -125,7 +129,7 @@ mod string_range_error_tests {
         // 错误案例：长度为 3，但在开区间上限处是不允许的
         map.insert("code".to_string(), Value::String("abc".into()));
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("length 3 out of range"));
@@ -143,13 +147,13 @@ mod string_range_error_tests {
                 max: Value::Float(5.5), // 🚩 字符串长度上限不能是浮点数
                 min_inclusive: true,
                 max_inclusive: true,
-            }]
+            }],
         });
 
         let mut map = HashMap::new();
         map.insert("note".to_string(), Value::String("hello!".into()));
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("Invalid max value type in range"));
@@ -167,26 +171,29 @@ mod string_range_error_tests {
                 max: Value::String("ten".into()), // 🚩 无法解析为 usize
                 min_inclusive: true,
                 max_inclusive: true,
-            }]
+            }],
         });
 
         let mut map = HashMap::new();
-        map.insert("comment".to_string(), Value::String("This is a test".into()));
+        map.insert(
+            "comment".to_string(),
+            Value::String("This is a test".into()),
+        );
         let mut data = Value::Object(map);
-        
+
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("Failed to parse 'ten' as usize"));
     }
 
     #[test]
-fn test_default_value_parsing_no_crash() {
-    let dsl = "status:string = 200";
-    let tokens = tokenize(dsl).unwrap();
-    let mut parser = Parser::new(tokens);
-    let rule = parser.parse_field(false).unwrap();
-    
-    // 验证数字默认值是否成功转为了 Value::String
-    assert!(matches!(rule.default, Some(Value::String(ref s)) if s == "200"));
-}
+    fn test_default_value_parsing_no_crash() {
+        let dsl = "status:string = 200";
+        let tokens = tokenize(dsl).unwrap();
+        let mut parser = Parser::new(tokens);
+        let rule = parser.parse_field(false).unwrap();
+
+        // 验证数字默认值是否成功转为了 Value::String
+        assert!(matches!(rule.default, Some(Value::String(ref s)) if s == "200"));
+    }
 }

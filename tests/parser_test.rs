@@ -1,12 +1,13 @@
-
 #[cfg(test)]
 mod parser_tests {
-    use zz_validator::{ast::{Constraint, Constraints, FieldType, Value}, parser::Parser};
-  
+    use zz_validator::{
+        ast::{Constraint, Constraints, FieldType, Value},
+        parser::Parser,
+    };
+
     #[test]
     fn test_full_dsl_parse() {
-        let dsl =
-            r#"
+        let dsl = r#"
         (
             username:string[3,20] regex("^[a-zA-Z0-9_]+$"),  
             age:int[0,150]=30,      
@@ -50,11 +51,10 @@ mod parser_tests {
         assert_eq!(rules[16].default, Some(Value::String("5".into())));
 
         let escaped_field_constraint = match &rules[15].constraints {
-            Some(Constraints { items }) =>
-                match &items[0] {
-                    Constraint::Regex(p) => p,
-                    _ => panic!("Expected regex constraint"),
-                }
+            Some(Constraints { items }) => match &items[0] {
+                Constraint::Regex(p) => p,
+                _ => panic!("Expected regex constraint"),
+            },
             _ => panic!("Expected constraints"),
         };
         println!("{:?}", escaped_field_constraint);

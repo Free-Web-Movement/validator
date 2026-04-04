@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use zz_validator::token::{ Token, tokenize };
+    use zz_validator::token::{Token, tokenize};
     #[test]
     fn test_tokenize_full_dsl_with_scientific_range() {
-        let dsl =
-            r#"
+        let dsl = r#"
         (
             username:string[3,20] regex("^[a-zA-Z0-9_]+$"),  
             age:int[0,150]=30,      
@@ -52,7 +51,6 @@ mod tests {
             Token::Ident("^[a-zA-Z0-9_]+$".into()),
             Token::RParen,
             Token::Comma,
-
             Token::Ident("age".into()),
             Token::Colon,
             Token::Ident("int".into()),
@@ -64,14 +62,12 @@ mod tests {
             Token::Equal,
             Token::Number("30".into()),
             Token::Comma,
-
             Token::Ident("age".into()),
             Token::Colon,
             Token::Ident("int".into()),
             Token::Equal,
             Token::Number("30".into()),
             Token::Comma,
-
             Token::Ident("score".into()),
             Token::Colon,
             Token::Ident("float".into()),
@@ -81,14 +77,12 @@ mod tests {
             Token::Number("100".into()),
             Token::RParen,
             Token::Comma,
-
             Token::Ident("active".into()),
             Token::Colon,
             Token::Ident("bool".into()),
             Token::Equal,
             Token::Ident("true".into()),
             Token::Comma,
-
             Token::Ident("nickname".into()),
             Token::Question,
             Token::Colon,
@@ -99,7 +93,6 @@ mod tests {
             Token::Number("20".into()),
             Token::RBracket,
             Token::Comma,
-
             Token::Ident("role".into()),
             Token::Colon,
             Token::Ident("string".into()),
@@ -114,14 +107,12 @@ mod tests {
             Token::Equal,
             Token::Ident("user".into()),
             Token::Comma,
-
             Token::Ident("id".into()),
             Token::Colon,
             Token::Ident("int".into()),
             Token::Pipe,
             Token::Ident("float".into()),
             Token::Comma,
-
             Token::Ident("profile".into()),
             Token::Colon,
             Token::Ident("object".into()),
@@ -168,7 +159,6 @@ mod tests {
             Token::RParen,
             Token::RParen,
             Token::Comma,
-
             Token::Ident("tags".into()),
             Token::Colon,
             Token::Ident("array".into()),
@@ -181,7 +171,6 @@ mod tests {
             Token::RBracket,
             Token::Gt,
             Token::Comma,
-
             Token::Ident("scores".into()),
             Token::Colon,
             Token::Ident("array".into()),
@@ -194,7 +183,6 @@ mod tests {
             Token::RBracket,
             Token::Gt,
             Token::Comma,
-
             // 新增科学计数法
             Token::Ident("distance".into()),
             Token::Colon,
@@ -207,7 +195,6 @@ mod tests {
             Token::Equal,
             Token::Number("1.496e11".into()),
             Token::Comma,
-
             Token::Ident("positive_scientific".into()),
             Token::Colon,
             Token::Ident("float".into()),
@@ -219,7 +206,6 @@ mod tests {
             Token::Equal,
             Token::Number("+1.5e3".into()),
             Token::Comma,
-
             Token::Ident("negative_scientific".into()),
             Token::Colon,
             Token::Ident("float".into()),
@@ -231,7 +217,6 @@ mod tests {
             Token::Equal,
             Token::Number("-1.5e3".into()),
             Token::Comma,
-
             Token::Ident("mixed_sign_scientific".into()),
             Token::Colon,
             Token::Ident("float".into()),
@@ -243,7 +228,6 @@ mod tests {
             Token::Equal,
             Token::Number("3.0e0".into()),
             Token::Comma,
-
             Token::Ident("escaped_field".into()),
             Token::Colon,
             Token::Ident("string".into()),
@@ -252,7 +236,6 @@ mod tests {
             Token::Ident("line1\nline2\rtab\tquote\"backslash\\".into()),
             Token::RParen,
             Token::Comma,
-
             // field_with_underscore
             Token::Ident("_start_with_underscore".into()),
             Token::Colon,
@@ -264,10 +247,12 @@ mod tests {
             Token::RBracket,
             Token::Equal,
             Token::Number("5".into()),
-
-            Token::RParen
+            Token::RParen,
         ];
 
-        assert_eq!(tokens, expected_tokens, "Tokens did not match expected sequence");
+        assert_eq!(
+            tokens, expected_tokens,
+            "Tokens did not match expected sequence"
+        );
     }
 }

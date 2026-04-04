@@ -83,13 +83,12 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
                 while let Some(&c) = chars.peek() {
                     // 数字主体部分，包括科学计数法 e/E 和可能的 +/-
-                    if
-                        c.is_ascii_digit() ||
-                        c == '.' ||
-                        c == 'e' ||
-                        c == 'E' ||
-                        c == '+' ||
-                        c == '-'
+                    if c.is_ascii_digit()
+                        || c == '.'
+                        || c == 'e'
+                        || c == 'E'
+                        || c == '+'
+                        || c == '-'
                     {
                         num_str.push(c);
                         chars.next();

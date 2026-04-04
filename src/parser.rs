@@ -276,7 +276,7 @@ impl Parser {
                     self.next();
                     let token = self.next().ok_or("Expected default value")?;
 
-let val = match token {
+                    let val = match token {
                         Token::Number(s) => {
                             // 关键修正：如果字段是 string，默认值直接存为 Value::String
                             if field_type == FieldType::String {
