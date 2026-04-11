@@ -9,7 +9,7 @@ mod validate_type_error_tests {
 
     // 辅助工具：快速构造 Value 进行测试
     fn check_type_err(val: Value, t: FieldType) -> String {
-        validate_type(&val, &t).unwrap_err()
+        validate_type(&val, &t).unwrap_err().to_string()
     }
 
     // --- 1. 基础物理类型物理错误 ---
@@ -57,7 +57,7 @@ mod validate_type_error_tests {
         // Password/Token 必须是字符串
         assert_eq!(
             check_type_err(Value::Bool(true), FieldType::Password),
-            "Not string for password"
+            "Not string for Password"
         );
     }
 

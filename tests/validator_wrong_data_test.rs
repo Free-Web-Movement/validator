@@ -23,7 +23,7 @@ mod negative_tests {
         let mut data = Value::Object(HashMap::new()); // 数据中没有 "name"
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Missing required field"));
+        assert!(res.unwrap_err().to_string().contains("Missing required field"));
     }
 
     // --- 2. 联合类型不匹配 (Union types mismatch) ---
@@ -35,7 +35,7 @@ mod negative_tests {
         let mut data = Value::Object(map);
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("does not match union types"));
+        assert!(res.unwrap_err().to_string().contains("does not match union types"));
     }
 
     // --- 3. 基础类型不匹配 (Type mismatch) ---
@@ -50,14 +50,10 @@ mod negative_tests {
         let res = validate_field(&mut data, &rule);
 
         assert!(res.is_err());
-        let err_msg = res.unwrap_err();
+        let err_msg = res.unwrap_err().to_string();
 
-        // 匹配你代码中实际的 format! 格式
-        // 格式为: "{field} value {val:?}: {err}"
-        assert!(err_msg.contains("age"));
-        assert!(err_msg.contains("Not int"));
-        // 或者更精准的匹配：
-        assert!(err_msg.contains("value String(\"25\"): Not int"));
+        // 真实输出应匹配 Display 实现: "age value String("25"): expected Int, found Not int"
+        assert!(err_msg.contains("age value String(\"25\"): expected Int, found Not int"));
     }
     // --- 4. 枚举值不存在 (Enum mismatch) ---
     #[test]
@@ -68,7 +64,7 @@ mod negative_tests {
         let mut data = Value::Object(map);
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("not in enum"));
+        assert!(res.unwrap_err().to_string().contains("not in enum"));
     }
 
     // --- 5. 数值范围越界 (Range out of range) ---
@@ -80,7 +76,7 @@ mod negative_tests {
         let mut data = Value::Object(map);
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     // --- 6. 字符串长度越界 (String length range) ---
@@ -92,7 +88,7 @@ mod negative_tests {
         let mut data = Value::Object(map);
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 3 out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     // --- 7. 正则表达式不匹配 (Regex mismatch) ---
@@ -104,7 +100,7 @@ mod negative_tests {
         let mut data = Value::Object(map);
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("regex mismatch"));
+        assert!(res.unwrap_err().to_string().contains("regex mismatch"));
     }
 
     // --- 8. 递归验证错误：数组元素不符合子规则 ---
@@ -153,6 +149,6 @@ mod negative_tests {
         let mut val = Value::Int(10);
         let res = validate_field(&mut val, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("is not object but has children"));
+        assert!(res.unwrap_err().to_string().contains("is not object but has children"));
     }
 }

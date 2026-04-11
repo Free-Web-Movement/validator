@@ -25,7 +25,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     #[test]
@@ -82,7 +82,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 1 out of range"));
+        assert!(res.unwrap_err().to_string().contains("1 out of range"));
     }
 
     // --- 3. 非法边界类型：Int 范围却给了 String 边界 ---
@@ -106,7 +106,7 @@ mod range_error_tests {
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
 
-        let err_msg = res.unwrap_err();
+        let err_msg = res.unwrap_err().to_string();
         // 打印出来看看实际的报错是什么，方便调试
         // println!("Actual error: {}", err_msg);
 
@@ -137,7 +137,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("cannot apply range constraint"));
+        assert!(res.unwrap_err().to_string().contains("cannot apply range constraint"));
     }
 
     // --- 5. 字符串长度解析失败 ---
@@ -161,7 +161,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Failed to parse 'abc' as usize"));
+        assert!(res.unwrap_err().to_string().contains("Failed to parse 'abc' as usize"));
     }
 
     #[test]
@@ -177,7 +177,7 @@ mod range_error_tests {
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
         // 校验错误信息是否包含字段名、非法值以及范围描述
-        let err = res.unwrap_err();
+        let err = res.unwrap_err().to_string();
         assert!(err.contains("count"));
         assert!(err.contains("11"));
         assert!(err.contains("out of range"));
@@ -195,7 +195,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     #[test]
@@ -218,7 +218,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Invalid max value type"));
+        assert!(res.unwrap_err().to_string().contains("Invalid max value type"));
     }
 
     // --- 1. 类型不匹配 (Not float) ---
@@ -232,7 +232,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Not float"));
+        assert!(res.unwrap_err().to_string().contains("Not float"));
     }
 
     // --- 2. 最小值越界 (Min boundary) ---
@@ -248,7 +248,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     // --- 3. 最大值越界 (Max boundary) ---
@@ -263,7 +263,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     // --- 4. 非法 Min 边界类型 (Invalid min value type) ---
@@ -286,7 +286,7 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Invalid min value type in range"));
+        assert!(res.unwrap_err().to_string().contains("Invalid min value type in range"));
     }
 
     // --- 5. 非法 Max 边界类型 (Invalid max value type) ---
@@ -309,6 +309,6 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Invalid max value type in range"));
+        assert!(res.unwrap_err().to_string().contains("Invalid max value type in range"));
     }
 }

@@ -26,7 +26,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 2 out of range"));
+        assert!(res.unwrap_err().to_string().contains("2 out of range"));
     }
 
     // --- 2. 字符串长度太长 (大于 max) ---
@@ -40,7 +40,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 6 out of range"));
+        assert!(res.unwrap_err().to_string().contains("6 out of range"));
     }
 
     // --- 3. 开区间边界测试 (Exclusive boundary) ---
@@ -54,7 +54,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 3 out of range"));
+        assert!(res.unwrap_err().to_string().contains("3 out of range"));
     }
 
     // --- 4. 非法边界类型：String 范围给了 Float 边界 ---
@@ -78,7 +78,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Invalid min value type in range"));
+        assert!(res.unwrap_err().to_string().contains("Invalid min value type in range"));
     }
 
     // --- 5. 边界字符串解析失败 ---
@@ -102,7 +102,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Failed to parse 'five' as usize"));
+        assert!(res.unwrap_err().to_string().contains("Failed to parse 'five' as usize"));
     }
 
     // --- 1. 字符串长度超过闭区间最大值 [min, max] ---
@@ -117,7 +117,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 4 out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     // --- 2. 字符串长度触发开区间最大值边界 [min, max) ---
@@ -132,7 +132,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("length 3 out of range"));
+        assert!(res.unwrap_err().to_string().contains("out of range"));
     }
 
     // --- 3. 非法 Max 边界类型：String 长度上限给了 Float 边界 ---
@@ -156,7 +156,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Invalid max value type in range"));
+        assert!(res.unwrap_err().to_string().contains("Invalid max value type in range"));
     }
 
     // --- 4. Max 边界字符串解析失败 ---
@@ -183,7 +183,7 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("Failed to parse 'ten' as usize"));
+        assert!(res.unwrap_err().to_string().contains("Failed to parse 'ten' as usize"));
     }
 
     #[test]

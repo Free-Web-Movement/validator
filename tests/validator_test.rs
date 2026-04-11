@@ -102,7 +102,7 @@ mod tests {
         let err = validate_object(&mut bad_obj, &rules).unwrap_err();
         println!("err = {:?}", err);
         assert!(
-            err.contains("age value"),
+            err.to_string().contains("age value"),
             "Expected age type error, got {}",
             err
         );
@@ -115,7 +115,7 @@ mod tests {
             .insert("role".to_string(), Value::String("superuser".to_string()));
         let err = validate_object(&mut bad_enum, &rules).unwrap_err();
         assert!(
-            err.contains("role value"),
+            err.to_string().contains("role value"),
             "Expected role enum error, got {}",
             err
         );
@@ -128,7 +128,7 @@ mod tests {
         );
         let err = validate_object(&mut bad_regex, &rules).unwrap_err();
         assert!(
-            err.contains("username regex mismatch"),
+            err.to_string().contains("username regex mismatch"),
             "Expected regex error, got {}",
             err
         );
@@ -141,7 +141,7 @@ mod tests {
             .insert("score".to_string(), Value::Float(150.0));
         let err = validate_object(&mut bad_range, &rules).unwrap_err();
         assert!(
-            err.contains("score value"),
+            err.to_string().contains("score value"),
             "Expected range error, got {}",
             err
         );
