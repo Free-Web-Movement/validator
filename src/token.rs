@@ -5,6 +5,7 @@
 pub enum Token {
     Ident(String),
     Number(String), // 数字统一存为字符串，包括科学计数法
+    String(String), // 带引号的字符串字面量
     Colon,
     Comma,
     LParen,
@@ -14,7 +15,6 @@ pub enum Token {
     Question,
     Lt,
     Gt,
-    Enum,
     Equal,
     Pipe,
 }
@@ -74,11 +74,10 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
             '0'..='9' | '.' | '+' | '-' => {
                 let mut num_str = String::new();
                 // 如果开头是 + 或 -，先记录并移动
-                if let Some(&c) = chars.peek() {
-                    if c == '+' || c == '-' {
-                        num_str.push(c);
-                        chars.next();
-                    }
+                if let Some(&c) = chars.peek()
+                    && (c == '+' || c == '-') {
+                    num_str.push(c);
+                    chars.next();
                 }
 
                 while let Some(&c) = chars.peek() {
@@ -132,7 +131,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                         chars.next();
                     }
                 }
-                tokens.push(Token::Ident(s)); // 字符串作为 Ident 保存
+                tokens.push(Token::String(s)); // 字符串作为 String 保存
             }
             c if c.is_alphanumeric() || c == '_' => {
                 let mut ident = String::new();

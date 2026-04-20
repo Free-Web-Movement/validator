@@ -11,13 +11,14 @@ pub enum FieldType {
     Bool,
     Object,
     Array,
-    Email, // 新增
-    Uri,   // 新增
-    Uuid,  // 新增
+    Email,
+    Uri,
+    Uuid,
     Ip,
     Mac,
     Date,
     DateTime,
+    Custom(String),
     Time,
     Timestamp,
     Color,
@@ -27,6 +28,21 @@ pub enum FieldType {
     Base64,
     Password,
     Token,
+    Phone,
+    CreditCard,
+    ISBN,
+    Port,
+    Json,
+    UrlEncoded,
+    Lat,
+    Lng,
+    SemVer,
+    Username,
+    CountryCode,
+    PostalCode,
+    FilePath,
+    Alpha,
+    Alphanumeric,
 }
 
 #[derive(Debug, Clone)]

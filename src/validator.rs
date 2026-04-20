@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use regex::Regex;
+
+static REGEX_CACHE: Lazy<Mutex<HashMap<String, Regex>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 use crate::{
     ast::{Constraint, FieldRule, FieldType, Value},
@@ -76,7 +80,8 @@ pub type Result<T> = std::result::Result<T, ValidationError>;
 /// -----------------------------
 static EMAIL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").unwrap());
 static UUID_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$").unwrap());
-static IP_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$").unwrap());
+static IP_V4_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$").unwrap());
+static IP_V6_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$").unwrap());
 static MAC_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$").unwrap());
 static DATE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap());
 static DATETIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$").unwrap());
@@ -86,18 +91,29 @@ static HOSTNAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[a-zA-Z0-9_](?:[
 static SLUG_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").unwrap());
 static HEX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-fA-F]+$").unwrap());
 static BASE64_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Za-z0-9+/]+={0,2}$").unwrap());
+static PHONE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\+?[1-9]\d{1,14}$").unwrap());
+static CREDITCARD_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9]{13,19}$").unwrap());
+static ISBN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:ISBN-?1[03]:? )?(?:97[89]-?)?[0-9]{9}[0-9X]$").unwrap());
+static PORT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$").unwrap());
+static JSON_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"^[\[\]{}:,0-9"'\s-]+$"#).unwrap());
+static URLENCODED_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9._~-%]+$").unwrap());
+static SEMVER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$").unwrap());
+static USERNAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9_-]{2,19}$").unwrap());
+static COUNTRYCODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Z]{2}$").unwrap());
+static POSTALCODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Z0-9]{3,10}$").unwrap());
+static FILEPATH_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[a-zA-Z]:)?[/\w.-]+$").unwrap());
+static ALPHA_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z]+$").unwrap());
+static ALPHANUMERIC_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9]+$").unwrap());
 
 /// -----------------------------
 /// Validator
 /// -----------------------------
 pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<()> {
     // 对对象，先填充默认值
-    if let Value::Object(obj) = value {
-        if !obj.contains_key(&rule.field) {
-            if let Some(d) = &rule.default {
-                obj.insert(rule.field.clone(), d.clone());
-            }
-        }
+    if let Value::Object(obj) = value
+        && !obj.contains_key(&rule.field)
+        && let Some(d) = &rule.default {
+        obj.insert(rule.field.clone(), d.clone());
     }
 
     // 获取值
@@ -117,12 +133,10 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<()> {
         }
     };
 
-    if !rule.required {
-        if let Value::String(s) = val {
-            if s.is_empty() {
-                return Ok(());
-            }
-        }
+    if !rule.required
+        && let Value::String(s) = val
+        && s.is_empty() {
+        return Ok(());
     }
 
     // union types 验证
@@ -157,14 +171,13 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<()> {
     }
 
     // enum 验证
-    if let Some(enum_vals) = &rule.enum_values {
-        if !enum_vals.contains(val) {
-            return Err(ValidationError::EnumMismatch {
-                field: rule.field.clone(),
-                value: format!("{:?}", val),
-                expected: enum_vals.clone(),
-            });
-        }
+    if let Some(enum_vals) = &rule.enum_values
+        && !enum_vals.contains(val) {
+        return Err(ValidationError::EnumMismatch {
+            field: rule.field.clone(),
+            value: format!("{:?}", val),
+            expected: enum_vals.clone(),
+        });
     }
 
     // constraints 验证
@@ -210,7 +223,20 @@ fn validate_constraint(val: &Value, con: &Constraint, field_name: &str) -> Resul
         } => validate_range(val, min, max, *min_inclusive, *max_inclusive, field_name),
         Constraint::Regex(pattern) => {
             let s = val.as_str().ok_or_else(|| ValidationError::Custom(format!("{} not string for regex", field_name)))?;
-            let re = Regex::new(pattern).map_err(|e| ValidationError::InvalidRegex(e.to_string()))?;
+            let re = {
+                let mut cache = REGEX_CACHE.lock().unwrap();
+                if let Some(r) = cache.get(pattern) {
+                    r.clone()
+                } else {
+                    match Regex::new(pattern) {
+                        Ok(regex) => {
+                            cache.insert(pattern.clone(), regex.clone());
+                            regex
+                        }
+                        Err(e) => return Err(ValidationError::InvalidRegex(e.to_string())),
+                    }
+                }
+            };
             if !re.is_match(s) {
                 return Err(ValidationError::RegexMismatch {
                     field: field_name.to_string(),
@@ -300,6 +326,11 @@ fn parse_usize(val: &Value, field: &str, label: &str) -> Result<usize> {
     }
 }
 
+fn validate_string_type(value: &Value, re: &Regex, type_name: &str) -> Result<()> {
+    let s = value.as_str().ok_or(ValidationError::Custom(format!("Not string for {}", type_name)))?;
+    if re.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid {}: {}", type_name, s))) }
+}
+
 pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
     match t {
         FieldType::String => value.as_str().map(|_| ()).ok_or(ValidationError::Custom("Not string".into())),
@@ -311,7 +342,7 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
         FieldType::Email => {
             let s = value.as_str().ok_or(ValidationError::Custom("Not string for email".into()))?;
             if !EMAIL_RE.is_match(s) {
-                return Err(ValidationError::Custom(format!("{:?} is not a valid email", value)));
+                return Err(ValidationError::Custom(format!("Invalid email: {}", s)));
             }
             Ok(())
         }
@@ -322,58 +353,118 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
         FieldType::Uuid => {
             let s = value.as_str().ok_or(ValidationError::Custom("Not string for uuid".into()))?;
             if !UUID_RE.is_match(s) {
-                return Err(ValidationError::Custom(format!("{} is not a valid UUID", s)));
+                return Err(ValidationError::Custom(format!("Invalid uuid: {}", s)));
             }
             Ok(())
         }
         FieldType::Ip => {
             let s = value.as_str().ok_or(ValidationError::Custom("Not string for ip".into()))?;
-            if IP_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid ip: {}", s))) }
+            if IP_V4_RE.is_match(s) || IP_V6_RE.is_match(s) {
+                Ok(())
+            } else {
+                Err(ValidationError::Custom(format!("Invalid ip: {}", s)))
+            }
         }
-        FieldType::Mac => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for mac".into()))?;
-            if MAC_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid mac: {}", s))) }
-        }
-        FieldType::Date => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for date".into()))?;
-            if DATE_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid date: {}", s))) }
-        }
-        FieldType::DateTime => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for datetime".into()))?;
-            if DATETIME_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid datetime: {}", s))) }
-        }
-        FieldType::Time => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for time".into()))?;
-            if TIME_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid time: {}", s))) }
-        }
-        FieldType::Timestamp => {
-            value.as_int().map(|_| ()).ok_or(ValidationError::Custom("Not number for timestamp".into()))
-        }
-        FieldType::Color => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for color".into()))?;
-            if COLOR_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid color: {}", s))) }
-        }
+        FieldType::Mac => validate_string_type(value, &MAC_RE, "mac"),
+        FieldType::Date => validate_string_type(value, &DATE_RE, "date"),
+        FieldType::DateTime => validate_string_type(value, &DATETIME_RE, "datetime"),
+        FieldType::Time => validate_string_type(value, &TIME_RE, "time"),
+        FieldType::Timestamp => value.as_int().map(|_| ()).ok_or(ValidationError::Custom("Not number for timestamp".into())),
+        FieldType::Color => validate_string_type(value, &COLOR_RE, "color"),
         FieldType::Hostname => {
             let s = value.as_str().ok_or(ValidationError::Custom("Not string for hostname".into()))?;
             if s.is_empty() || s.len() > 253 {
-                return Err(ValidationError::Custom(format!("Invalid hostname length: {}", s)));
+                return Err(ValidationError::Custom(format!("Hostname length out of range: {}", s.len())));
             }
             if HOSTNAME_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid hostname: {}", s))) }
         }
-        FieldType::Slug => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for slug".into()))?;
-            if SLUG_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid slug: {}", s))) }
-        }
-        FieldType::Hex => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for hex".into()))?;
-            if HEX_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid hex: {}", s))) }
-        }
-        FieldType::Base64 => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for base64".into()))?;
-            if BASE64_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid base64: {}", s))) }
-        }
+        FieldType::Slug => validate_string_type(value, &SLUG_RE, "slug"),
+        FieldType::Hex => validate_string_type(value, &HEX_RE, "hex"),
+        FieldType::Base64 => validate_string_type(value, &BASE64_RE, "base64"),
         FieldType::Password | FieldType::Token => {
             value.as_str().map(|_| ()).ok_or(ValidationError::Custom(format!("Not string for {:?}", t)))
+        }
+        FieldType::Phone => validate_string_type(value, &PHONE_RE, "phone"),
+        FieldType::CreditCard => {
+            let s = value.as_str().ok_or(ValidationError::Custom("Not string for creditcard".into()))?;
+            if !CREDITCARD_RE.is_match(s) {
+                return Err(ValidationError::Custom(format!("Invalid creditcard: {}", s)));
+            }
+            let digits: Vec<u32> = s.chars().filter_map(|c| c.to_digit(10)).collect();
+            if digits.len() < 13 || digits.len() > 19 {
+                return Err(ValidationError::Custom(format!("Invalid creditcard length: {}", digits.len())));
+            }
+            let mut sum = 0;
+            let mut double = false;
+            for &d in digits.iter().rev() {
+                let mut val = d;
+                if double {
+                    val = if d > 4 { d * 2 - 9 } else { d * 2 };
+                }
+                sum += val;
+                double = !double;
+            }
+            if sum % 10 != 0 {
+                return Err(ValidationError::Custom("Invalid creditcard checksum".to_string()));
+            }
+            Ok(())
+        }
+        FieldType::ISBN => validate_string_type(value, &ISBN_RE, "isbn"),
+        FieldType::Port => validate_string_type(value, &PORT_RE, "port"),
+        FieldType::Json => validate_string_type(value, &JSON_RE, "json"),
+        FieldType::UrlEncoded => validate_string_type(value, &URLENCODED_RE, "urlencoded"),
+        FieldType::Lat => {
+            let s = value.as_str().ok_or(ValidationError::Custom("Not string for lat".into()))?;
+            if let Ok(f) = s.parse::<f64>() {
+                if (-90.0..=90.0).contains(&f) {
+                    Ok(())
+                } else {
+                    Err(ValidationError::Custom(format!("Latitude out of range: {}", f)))
+                }
+            } else {
+                Err(ValidationError::Custom(format!("Invalid latitude: {}", s)))
+            }
+        }
+        FieldType::Lng => {
+            let s = value.as_str().ok_or(ValidationError::Custom("Not string for lng".into()))?;
+            if let Ok(f) = s.parse::<f64>() {
+                if (-180.0..=180.0).contains(&f) {
+                    Ok(())
+                } else {
+                    Err(ValidationError::Custom(format!("Longitude out of range: {}", f)))
+                }
+            } else {
+                Err(ValidationError::Custom(format!("Invalid longitude: {}", s)))
+            }
+        }
+        FieldType::SemVer => validate_string_type(value, &SEMVER_RE, "semver"),
+        FieldType::Username => validate_string_type(value, &USERNAME_RE, "username"),
+        FieldType::CountryCode => validate_string_type(value, &COUNTRYCODE_RE, "countrycode"),
+        FieldType::PostalCode => validate_string_type(value, &POSTALCODE_RE, "postalcode"),
+        FieldType::FilePath => validate_string_type(value, &FILEPATH_RE, "filepath"),
+        FieldType::Alpha => validate_string_type(value, &ALPHA_RE, "alpha"),
+        FieldType::Alphanumeric => validate_string_type(value, &ALPHANUMERIC_RE, "alphanumeric"),
+        FieldType::Custom(pattern) => {
+            let s = value.as_str().ok_or(ValidationError::Custom("Not string for custom regex".into()))?;
+            let re = {
+                let mut cache = REGEX_CACHE.lock().unwrap();
+                if let Some(r) = cache.get(pattern) {
+                    r.clone()
+                } else {
+                    match Regex::new(pattern) {
+                        Ok(regex) => {
+                            cache.insert(pattern.clone(), regex.clone());
+                            regex
+                        }
+                        Err(e) => return Err(ValidationError::InvalidRegex(e.to_string())),
+                    }
+                }
+            };
+            if re.is_match(s) {
+                Ok(())
+            } else {
+                Err(ValidationError::Custom(format!("Pattern mismatch: {}", s)))
+            }
         }
     }
 }
@@ -386,6 +477,14 @@ pub fn validate_object(value: &mut Value, rules: &[FieldRule]) -> Result<()> {
         Ok(())
     } else {
         Err(ValidationError::Custom("Value is not object".into()))
+    }
+}
+
+pub fn validate(value: &Value, rules: &[FieldRule]) -> Option<Value> {
+    let mut validated = value.clone();
+    match validate_object(&mut validated, rules) {
+        Ok(()) => Some(validated),
+        Err(_) => None,
     }
 }
 

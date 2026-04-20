@@ -111,7 +111,30 @@ impl Parser {
                     "base64" => FieldType::Base64,
                     "password" => FieldType::Password,
                     "token" => FieldType::Token,
-
+                    "phone" => FieldType::Phone,
+                    "creditcard" => FieldType::CreditCard,
+                    "isbn" => FieldType::ISBN,
+                    "port" => FieldType::Port,
+                    "json" => FieldType::Json,
+                    "urlencoded" => FieldType::UrlEncoded,
+                    "lat" => FieldType::Lat,
+                    "lng" => FieldType::Lng,
+                    "semver" => FieldType::SemVer,
+                    "username" => FieldType::Username,
+                    "countrycode" => FieldType::CountryCode,
+                    "postalcode" => FieldType::PostalCode,
+                    "filepath" => FieldType::FilePath,
+                    "alpha" => FieldType::Alpha,
+                    "alphanumeric" => FieldType::Alphanumeric,
+                    "regex" => {
+                        self.expect(&Token::LParen)?;
+                        let pattern = match self.next() {
+                            Some(Token::Ident(p)) | Some(Token::String(p)) => p,
+                            t => return Err(format!("Expected regex pattern, got {:?}", t)),
+                        };
+                        self.expect(&Token::RParen)?;
+                        FieldType::Custom(pattern)
+                    }
                     t => {
                         return Err(format!("Unknown type {}", t));
                     }
@@ -215,6 +238,7 @@ impl Parser {
                     self.expect(&Token::LParen)?;
                     let pattern = match self.next() {
                         Some(Token::Ident(p)) => p,
+                        Some(Token::String(p)) => p,
                         t => {
                             return Err(format!("Expected pattern, got {:?}", t));
                         }
@@ -237,8 +261,7 @@ impl Parser {
                                     .parse_token_number_as_type(&Token::Number(s), &field_type)?;
                                 vals.push(v);
                             }
-                            Some(Token::Ident(v)) => {
-                                // 如果是 bool 类型，特殊处理
+                            Some(Token::Ident(v)) | Some(Token::String(v)) => {
                                 if field_type == FieldType::Bool {
                                     match v.as_str() {
                                         "true" => vals.push(Value::Bool(true)),
@@ -286,7 +309,7 @@ impl Parser {
                                 self.parse_token_number_as_type(&Token::Number(s), &field_type)?
                             }
                         }
-                        Token::Ident(s) => {
+                        Token::Ident(s) | Token::String(s) => {
                             if field_type == FieldType::Bool {
                                 match s.as_str() {
                                     "true" => Value::Bool(true),
@@ -296,7 +319,6 @@ impl Parser {
                                     }
                                 }
                             } else {
-                                // 字段是 string 时，Ident 也是字符串
                                 Value::String(s)
                             }
                         }
