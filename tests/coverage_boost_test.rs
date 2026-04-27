@@ -2,10 +2,12 @@
 mod coverage_boost_tests {
     use std::collections::HashMap;
     use zz_validator::{
-        ast::{FieldType, Value, FieldRule, Constraints, Constraint},
-        token::{tokenize, Token},
+        ast::{Constraint, Constraints, FieldRule, FieldType, Value},
         parser::Parser,
-        validator::{validate_field, validate_type, validate_object, validate_rule, ValidationError},
+        token::{Token, tokenize},
+        validator::{
+            ValidationError, validate_field, validate_object, validate_rule, validate_type,
+        },
     };
 
     // -------------------------------------------------------------------------
@@ -16,7 +18,7 @@ mod coverage_boost_tests {
         // 非法数字
         assert!(tokenize("1.2.3").is_err());
         assert!(tokenize("1e2e3").is_err());
-        
+
         // 转义字符覆盖
         let tokens = tokenize(r#""line1\nline2\rline3\tline4\"quote\\slash\other""#).unwrap();
         if let Token::Ident(s) = &tokens[0] {
@@ -96,10 +98,18 @@ mod coverage_boost_tests {
         assert!(arr.as_array().is_some());
 
         // Constraints Clone 覆盖
-        let c = Constraints { items: vec![Constraint::Regex(".*".into())] };
+        let c = Constraints {
+            items: vec![Constraint::Regex(".*".into())],
+        };
         let _c2 = c.clone();
-        let _c3 = Constraint::Range { min: Value::Int(1), max: Value::Int(10), min_inclusive: true, max_inclusive: true }.clone();
-        
+        let _c3 = Constraint::Range {
+            min: Value::Int(1),
+            max: Value::Int(10),
+            min_inclusive: true,
+            max_inclusive: true,
+        }
+        .clone();
+
         // Debug 覆盖
         let _ = format!("{:?} {:?} {:?}", FieldType::String, v, c);
     }
@@ -139,7 +149,15 @@ mod coverage_boost_tests {
         };
         let mut obj = Value::Object(HashMap::new());
         validate_field(&mut obj, &rule).unwrap();
-        assert_eq!(obj.as_object().unwrap().get("opt").unwrap().as_int().unwrap(), 42);
+        assert_eq!(
+            obj.as_object()
+                .unwrap()
+                .get("opt")
+                .unwrap()
+                .as_int()
+                .unwrap(),
+            42
+        );
 
         // 可选字段空字符串跳过逻辑覆盖
         let rule_opt_str = FieldRule {
@@ -165,7 +183,9 @@ mod coverage_boost_tests {
             default: None,
             enum_values: None,
             union_types: None,
-            constraints: Some(Constraints { items: vec![Constraint::Regex("[".into())] }),
+            constraints: Some(Constraints {
+                items: vec![Constraint::Regex("[".into())],
+            }),
             rule: None,
             children: None,
             is_array: false,
@@ -189,7 +209,8 @@ mod coverage_boost_tests {
             children: None,
             is_array: false,
         };
-        let mut data_union = Value::Object(HashMap::from([("u".into(), Value::String("s".into()))]));
+        let mut data_union =
+            Value::Object(HashMap::from([("u".into(), Value::String("s".into()))]));
         assert!(validate_field(&mut data_union, &rule_union).is_err());
 
         // 递归 array 覆盖
@@ -202,7 +223,7 @@ mod coverage_boost_tests {
             union_types: None,
             constraints: None,
             rule: Some(Box::new(FieldRule {
-                field: "".into(), 
+                field: "".into(),
                 field_type: FieldType::Int,
                 required: true,
                 default: None,
@@ -216,7 +237,10 @@ mod coverage_boost_tests {
             children: None,
             is_array: true,
         };
-        let mut data_arr = Value::Object(HashMap::from([("tags".into(), Value::Array(vec![Value::Int(1), Value::String("2".into())]))]));
+        let mut data_arr = Value::Object(HashMap::from([(
+            "tags".into(),
+            Value::Array(vec![Value::Int(1), Value::String("2".into())]),
+        )]));
         assert!(validate_field(&mut data_arr, &rule_arr).is_err());
 
         // validate_rule 覆盖
@@ -237,11 +261,32 @@ mod coverage_boost_tests {
     fn test_validation_error_display_coverage() {
         let errs = vec![
             ValidationError::MissingField("f".into()),
-            ValidationError::TypeMismatch { field: "f".into(), value: "v".into(), expected: "Int".into(), actual: "err".into() },
-            ValidationError::UnionTypeMismatch { field: "f".into(), value: "v".into(), types: vec![FieldType::Int] },
-            ValidationError::EnumMismatch { field: "f".into(), value: "v".into(), expected: vec![Value::Int(1)] },
-            ValidationError::RangeError { field: "f".into(), value: "v".into(), min: "1".into(), max: "10".into() },
-            ValidationError::RegexMismatch { field: "f".into(), pattern: "p".into() },
+            ValidationError::TypeMismatch {
+                field: "f".into(),
+                value: "v".into(),
+                expected: "Int".into(),
+                actual: "err".into(),
+            },
+            ValidationError::UnionTypeMismatch {
+                field: "f".into(),
+                value: "v".into(),
+                types: vec![FieldType::Int],
+            },
+            ValidationError::EnumMismatch {
+                field: "f".into(),
+                value: "v".into(),
+                expected: vec![Value::Int(1)],
+            },
+            ValidationError::RangeError {
+                field: "f".into(),
+                value: "v".into(),
+                min: "1".into(),
+                max: "10".into(),
+            },
+            ValidationError::RegexMismatch {
+                field: "f".into(),
+                pattern: "p".into(),
+            },
             ValidationError::InvalidRegex("err".into()),
             ValidationError::NotAnObject("f".into()),
             ValidationError::Custom("err".into()),

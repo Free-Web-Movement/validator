@@ -75,7 +75,8 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                 let mut num_str = String::new();
                 // 如果开头是 + 或 -，先记录并移动
                 if let Some(&c) = chars.peek()
-                    && (c == '+' || c == '-') {
+                    && (c == '+' || c == '-')
+                {
                     num_str.push(c);
                     chars.next();
                 }

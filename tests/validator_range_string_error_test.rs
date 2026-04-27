@@ -78,7 +78,11 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Invalid min value type in range"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Invalid min value type in range")
+        );
     }
 
     // --- 5. 边界字符串解析失败 ---
@@ -102,7 +106,11 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Failed to parse 'five' as usize"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Failed to parse 'five' as usize")
+        );
     }
 
     // --- 1. 字符串长度超过闭区间最大值 [min, max] ---
@@ -156,7 +164,11 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Invalid max value type in range"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Invalid max value type in range")
+        );
     }
 
     // --- 4. Max 边界字符串解析失败 ---
@@ -183,7 +195,11 @@ mod string_range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Failed to parse 'ten' as usize"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Failed to parse 'ten' as usize")
+        );
     }
 
     #[test]

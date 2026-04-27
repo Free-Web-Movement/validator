@@ -1,8 +1,8 @@
 use std::collections::HashMap;
+use zz_validator::ast::FieldType;
 use zz_validator::ast::Value;
 use zz_validator::parser::Parser;
-use zz_validator::validator::{validate, validate_type, ValidationError};
-use zz_validator::ast::FieldType;
+use zz_validator::validator::{ValidationError, validate, validate_type};
 
 #[test]
 fn test_validate_function_returns_option_value() {
@@ -77,8 +77,6 @@ fn test_validate_type_port_invalid() {
     let val = Value::String("70000".to_string());
     assert!(validate_type(&val, &FieldType::Port).is_err());
 }
-
-
 
 #[test]
 fn test_validate_type_lat_valid() {
@@ -321,7 +319,10 @@ fn test_validate_complex_object_with_validate_function() {
     let data = Value::Object({
         let mut map = HashMap::new();
         map.insert("name".to_string(), Value::String("john".to_string()));
-        map.insert("tags".to_string(), Value::Array(vec![Value::String("a".to_string())]));
+        map.insert(
+            "tags".to_string(),
+            Value::Array(vec![Value::String("a".to_string())]),
+        );
         map
     });
     let result = validate(&data, &rules).unwrap();
@@ -440,9 +441,18 @@ fn test_validate_full_dsl_with_validate_function() {
     let rules = Parser::parse_rules(dsl).unwrap();
     let data = Value::Object({
         let mut map = HashMap::new();
-        map.insert("id".to_string(), Value::String("550e8400-e29b-41d4-a716-446655440000".to_string()));
-        map.insert("username".to_string(), Value::String("john_doe".to_string()));
-        map.insert("email".to_string(), Value::String("john@example.com".to_string()));
+        map.insert(
+            "id".to_string(),
+            Value::String("550e8400-e29b-41d4-a716-446655440000".to_string()),
+        );
+        map.insert(
+            "username".to_string(),
+            Value::String("john_doe".to_string()),
+        );
+        map.insert(
+            "email".to_string(),
+            Value::String("john@example.com".to_string()),
+        );
         map.insert("role".to_string(), Value::String("admin".to_string()));
         map.insert("active".to_string(), Value::Bool(true));
         map

@@ -23,7 +23,11 @@ mod negative_tests {
         let mut data = Value::Object(HashMap::new()); // 数据中没有 "name"
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Missing required field"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Missing required field")
+        );
     }
 
     // --- 2. 联合类型不匹配 (Union types mismatch) ---
@@ -35,7 +39,11 @@ mod negative_tests {
         let mut data = Value::Object(map);
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("does not match union types"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("does not match union types")
+        );
     }
 
     // --- 3. 基础类型不匹配 (Type mismatch) ---
@@ -149,6 +157,10 @@ mod negative_tests {
         let mut val = Value::Int(10);
         let res = validate_field(&mut val, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("is not object but has children"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("is not object but has children")
+        );
     }
 }

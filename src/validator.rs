@@ -1,11 +1,10 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Mutex;
-use once_cell::sync::Lazy;
-use regex::Regex;
 
-static REGEX_CACHE: Lazy<Mutex<HashMap<String, Regex>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static REGEX_CACHE: Lazy<Mutex<HashMap<String, Regex>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 use crate::{
     ast::{Constraint, FieldRule, FieldType, Value},
@@ -54,16 +53,43 @@ impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::MissingField(field) => write!(f, "Missing required field {}", field),
-            Self::TypeMismatch { field, value, expected, actual } => 
-                write!(f, "{} value {}: expected {}, found {}", field, value, expected, actual),
-            Self::UnionTypeMismatch { field, value, types } =>
-                write!(f, "{} value {} does not match union types {:?}", field, value, types),
-            Self::EnumMismatch { field, value, expected } =>
-                write!(f, "{} value {} not in enum {:?}", field, value, expected),
-            Self::RangeError { field, value, min, max } =>
-                write!(f, "{} value {} out of range [{}, {}]", field, value, min, max),
-            Self::RegexMismatch { field, pattern } =>
-                write!(f, "{} regex mismatch: {}", field, pattern),
+            Self::TypeMismatch {
+                field,
+                value,
+                expected,
+                actual,
+            } => write!(
+                f,
+                "{} value {}: expected {}, found {}",
+                field, value, expected, actual
+            ),
+            Self::UnionTypeMismatch {
+                field,
+                value,
+                types,
+            } => write!(
+                f,
+                "{} value {} does not match union types {:?}",
+                field, value, types
+            ),
+            Self::EnumMismatch {
+                field,
+                value,
+                expected,
+            } => write!(f, "{} value {} not in enum {:?}", field, value, expected),
+            Self::RangeError {
+                field,
+                value,
+                min,
+                max,
+            } => write!(
+                f,
+                "{} value {} out of range [{}, {}]",
+                field, value, min, max
+            ),
+            Self::RegexMismatch { field, pattern } => {
+                write!(f, "{} regex mismatch: {}", field, pattern)
+            }
             Self::InvalidRegex(err) => write!(f, "Invalid regex: {}", err),
             Self::NotAnObject(field) => write!(f, "{} is not object but has children", field),
             Self::Custom(err) => write!(f, "{}", err),
@@ -79,26 +105,46 @@ pub type Result<T> = std::result::Result<T, ValidationError>;
 /// Pre-compiled Regexes
 /// -----------------------------
 static EMAIL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").unwrap());
-static UUID_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$").unwrap());
-static IP_V4_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$").unwrap());
-static IP_V6_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$").unwrap());
-static MAC_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$").unwrap());
+static UUID_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$")
+        .unwrap()
+});
+static IP_V4_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$").unwrap()
+});
+static IP_V6_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$").unwrap());
+static MAC_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$").unwrap());
 static DATE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap());
-static DATETIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$").unwrap());
+static DATETIME_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$").unwrap());
 static TIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{2}:\d{2}:\d{2}$").unwrap());
-static COLOR_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$").unwrap());
-static HOSTNAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$").unwrap());
+static COLOR_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$").unwrap());
+static HOSTNAME_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$").unwrap()
+});
 static SLUG_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").unwrap());
 static HEX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-fA-F]+$").unwrap());
 static BASE64_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Za-z0-9+/]+={0,2}$").unwrap());
 static PHONE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\+?[1-9]\d{1,14}$").unwrap());
 static CREDITCARD_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9]{13,19}$").unwrap());
-static ISBN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:ISBN-?1[03]:? )?(?:97[89]-?)?[0-9]{9}[0-9X]$").unwrap());
-static PORT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$").unwrap());
+static ISBN_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:ISBN-?1[03]:? )?(?:97[89]-?)?[0-9]{9}[0-9X]$").unwrap());
+static PORT_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(
+        r"^(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+    )
+    .unwrap()
+});
 static JSON_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"^[\[\]{}:,0-9"'\s-]+$"#).unwrap());
 static URLENCODED_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9._~-%]+$").unwrap());
-static SEMVER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$").unwrap());
-static USERNAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9_-]{2,19}$").unwrap());
+static SEMVER_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$").unwrap()
+});
+static USERNAME_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9_-]{2,19}$").unwrap());
 static COUNTRYCODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Z]{2}$").unwrap());
 static POSTALCODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Z0-9]{3,10}$").unwrap());
 static FILEPATH_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[a-zA-Z]:)?[/\w.-]+$").unwrap());
@@ -112,7 +158,8 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<()> {
     // 对对象，先填充默认值
     if let Value::Object(obj) = value
         && !obj.contains_key(&rule.field)
-        && let Some(d) = &rule.default {
+        && let Some(d) = &rule.default
+    {
         obj.insert(rule.field.clone(), d.clone());
     }
 
@@ -135,7 +182,8 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<()> {
 
     if !rule.required
         && let Value::String(s) = val
-        && s.is_empty() {
+        && s.is_empty()
+    {
         return Ok(());
     }
 
@@ -172,7 +220,8 @@ pub fn validate_field(value: &mut Value, rule: &FieldRule) -> Result<()> {
 
     // enum 验证
     if let Some(enum_vals) = &rule.enum_values
-        && !enum_vals.contains(val) {
+        && !enum_vals.contains(val)
+    {
         return Err(ValidationError::EnumMismatch {
             field: rule.field.clone(),
             value: format!("{:?}", val),
@@ -222,7 +271,9 @@ fn validate_constraint(val: &Value, con: &Constraint, field_name: &str) -> Resul
             max_inclusive,
         } => validate_range(val, min, max, *min_inclusive, *max_inclusive, field_name),
         Constraint::Regex(pattern) => {
-            let s = val.as_str().ok_or_else(|| ValidationError::Custom(format!("{} not string for regex", field_name)))?;
+            let s = val.as_str().ok_or_else(|| {
+                ValidationError::Custom(format!("{} not string for regex", field_name))
+            })?;
             let re = {
                 let mut cache = REGEX_CACHE.lock().unwrap();
                 if let Some(r) = cache.get(pattern) {
@@ -248,19 +299,36 @@ fn validate_constraint(val: &Value, con: &Constraint, field_name: &str) -> Resul
     }
 }
 
-fn validate_range(val: &Value, min: &Value, max: &Value, min_inc: bool, max_inc: bool, field: &str) -> Result<()> {
+fn validate_range(
+    val: &Value,
+    min: &Value,
+    max: &Value,
+    min_inc: bool,
+    max_inc: bool,
+    field: &str,
+) -> Result<()> {
     match val {
         Value::Int(i) => {
             let n = *i as f64;
             let min_v = match min {
                 Value::Int(mi) => *mi as f64,
                 Value::Float(mf) => mf.ceil(),
-                _ => return Err(ValidationError::Custom(format!("Invalid min value type for {}", field))),
+                _ => {
+                    return Err(ValidationError::Custom(format!(
+                        "Invalid min value type for {}",
+                        field
+                    )));
+                }
             };
             let max_v = match max {
                 Value::Int(mi) => *mi as f64,
                 Value::Float(mf) => mf.floor(),
-                _ => return Err(ValidationError::Custom(format!("Invalid max value type for {}", field))),
+                _ => {
+                    return Err(ValidationError::Custom(format!(
+                        "Invalid max value type for {}",
+                        field
+                    )));
+                }
             };
 
             let min_ok = if min_inc { n >= min_v } else { n > min_v };
@@ -280,12 +348,22 @@ fn validate_range(val: &Value, min: &Value, max: &Value, min_inc: bool, max_inc:
             let min_v = match min {
                 Value::Int(mi) => *mi as f64,
                 Value::Float(mf) => *mf,
-                _ => return Err(ValidationError::Custom(format!("Invalid min value type in range for {}", field))),
+                _ => {
+                    return Err(ValidationError::Custom(format!(
+                        "Invalid min value type in range for {}",
+                        field
+                    )));
+                }
             };
             let max_v = match max {
                 Value::Int(mi) => *mi as f64,
                 Value::Float(mf) => *mf,
-                _ => return Err(ValidationError::Custom(format!("Invalid max value type in range for {}", field))),
+                _ => {
+                    return Err(ValidationError::Custom(format!(
+                        "Invalid max value type in range for {}",
+                        field
+                    )));
+                }
             };
             let min_ok = if min_inc { n >= min_v } else { n > min_v };
             let max_ok = if max_inc { n <= max_v } else { n < max_v };
@@ -313,7 +391,12 @@ fn validate_range(val: &Value, min: &Value, max: &Value, min_inc: bool, max_inc:
                 });
             }
         }
-        _ => return Err(ValidationError::Custom(format!("{} cannot apply range constraint to {:?}", field, val))),
+        _ => {
+            return Err(ValidationError::Custom(format!(
+                "{} cannot apply range constraint to {:?}",
+                field, val
+            )));
+        }
     }
     Ok(())
 }
@@ -321,44 +404,90 @@ fn validate_range(val: &Value, min: &Value, max: &Value, min_inc: bool, max_inc:
 fn parse_usize(val: &Value, field: &str, label: &str) -> Result<usize> {
     match val {
         Value::Int(i) => Ok(*i as usize),
-        Value::String(s) => s.parse::<usize>().map_err(|_| ValidationError::Custom(format!("Failed to parse '{}' as usize for {} {}", s, field, label))),
-        _ => Err(ValidationError::Custom(format!("Invalid {} value type in range for {}", label, field))),
+        Value::String(s) => s.parse::<usize>().map_err(|_| {
+            ValidationError::Custom(format!(
+                "Failed to parse '{}' as usize for {} {}",
+                s, field, label
+            ))
+        }),
+        _ => Err(ValidationError::Custom(format!(
+            "Invalid {} value type in range for {}",
+            label, field
+        ))),
     }
 }
 
 fn validate_string_type(value: &Value, re: &Regex, type_name: &str) -> Result<()> {
-    let s = value.as_str().ok_or(ValidationError::Custom(format!("Not string for {}", type_name)))?;
-    if re.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid {}: {}", type_name, s))) }
+    let s = value.as_str().ok_or(ValidationError::Custom(format!(
+        "Not string for {}",
+        type_name
+    )))?;
+    if re.is_match(s) {
+        Ok(())
+    } else {
+        Err(ValidationError::Custom(format!(
+            "Invalid {}: {}",
+            type_name, s
+        )))
+    }
 }
 
 pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
     match t {
-        FieldType::String => value.as_str().map(|_| ()).ok_or(ValidationError::Custom("Not string".into())),
-        FieldType::Int => value.as_int().map(|_| ()).ok_or(ValidationError::Custom("Not int".into())),
-        FieldType::Float => value.as_float().map(|_| ()).ok_or(ValidationError::Custom("Not float".into())),
-        FieldType::Bool => value.as_bool().map(|_| ()).ok_or(ValidationError::Custom("Not bool".into())),
-        FieldType::Object => value.as_object().map(|_| ()).ok_or(ValidationError::Custom("Not object".into())),
-        FieldType::Array => value.as_array().map(|_| ()).ok_or(ValidationError::Custom("Not array".into())),
+        FieldType::String => value
+            .as_str()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not string".into())),
+        FieldType::Int => value
+            .as_int()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not int".into())),
+        FieldType::Float => value
+            .as_float()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not float".into())),
+        FieldType::Bool => value
+            .as_bool()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not bool".into())),
+        FieldType::Object => value
+            .as_object()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not object".into())),
+        FieldType::Array => value
+            .as_array()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not array".into())),
         FieldType::Email => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for email".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for email".into()))?;
             if !EMAIL_RE.is_match(s) {
                 return Err(ValidationError::Custom(format!("Invalid email: {}", s)));
             }
             Ok(())
         }
         FieldType::Uri => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for uri".into()))?;
-            url::Url::parse(s).map(|_| ()).map_err(|_| ValidationError::Custom(format!("{} is not a valid URI", s)))
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for uri".into()))?;
+            url::Url::parse(s)
+                .map(|_| ())
+                .map_err(|_| ValidationError::Custom(format!("{} is not a valid URI", s)))
         }
         FieldType::Uuid => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for uuid".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for uuid".into()))?;
             if !UUID_RE.is_match(s) {
                 return Err(ValidationError::Custom(format!("Invalid uuid: {}", s)));
             }
             Ok(())
         }
         FieldType::Ip => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for ip".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for ip".into()))?;
             if IP_V4_RE.is_match(s) || IP_V6_RE.is_match(s) {
                 Ok(())
             } else {
@@ -369,30 +498,51 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
         FieldType::Date => validate_string_type(value, &DATE_RE, "date"),
         FieldType::DateTime => validate_string_type(value, &DATETIME_RE, "datetime"),
         FieldType::Time => validate_string_type(value, &TIME_RE, "time"),
-        FieldType::Timestamp => value.as_int().map(|_| ()).ok_or(ValidationError::Custom("Not number for timestamp".into())),
+        FieldType::Timestamp => value
+            .as_int()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom("Not number for timestamp".into())),
         FieldType::Color => validate_string_type(value, &COLOR_RE, "color"),
         FieldType::Hostname => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for hostname".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for hostname".into()))?;
             if s.is_empty() || s.len() > 253 {
-                return Err(ValidationError::Custom(format!("Hostname length out of range: {}", s.len())));
+                return Err(ValidationError::Custom(format!(
+                    "Hostname length out of range: {}",
+                    s.len()
+                )));
             }
-            if HOSTNAME_RE.is_match(s) { Ok(()) } else { Err(ValidationError::Custom(format!("Invalid hostname: {}", s))) }
+            if HOSTNAME_RE.is_match(s) {
+                Ok(())
+            } else {
+                Err(ValidationError::Custom(format!("Invalid hostname: {}", s)))
+            }
         }
         FieldType::Slug => validate_string_type(value, &SLUG_RE, "slug"),
         FieldType::Hex => validate_string_type(value, &HEX_RE, "hex"),
         FieldType::Base64 => validate_string_type(value, &BASE64_RE, "base64"),
-        FieldType::Password | FieldType::Token => {
-            value.as_str().map(|_| ()).ok_or(ValidationError::Custom(format!("Not string for {:?}", t)))
-        }
+        FieldType::Password | FieldType::Token => value
+            .as_str()
+            .map(|_| ())
+            .ok_or(ValidationError::Custom(format!("Not string for {:?}", t))),
         FieldType::Phone => validate_string_type(value, &PHONE_RE, "phone"),
         FieldType::CreditCard => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for creditcard".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for creditcard".into()))?;
             if !CREDITCARD_RE.is_match(s) {
-                return Err(ValidationError::Custom(format!("Invalid creditcard: {}", s)));
+                return Err(ValidationError::Custom(format!(
+                    "Invalid creditcard: {}",
+                    s
+                )));
             }
             let digits: Vec<u32> = s.chars().filter_map(|c| c.to_digit(10)).collect();
             if digits.len() < 13 || digits.len() > 19 {
-                return Err(ValidationError::Custom(format!("Invalid creditcard length: {}", digits.len())));
+                return Err(ValidationError::Custom(format!(
+                    "Invalid creditcard length: {}",
+                    digits.len()
+                )));
             }
             let mut sum = 0;
             let mut double = false;
@@ -405,7 +555,9 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
                 double = !double;
             }
             if sum % 10 != 0 {
-                return Err(ValidationError::Custom("Invalid creditcard checksum".to_string()));
+                return Err(ValidationError::Custom(
+                    "Invalid creditcard checksum".to_string(),
+                ));
             }
             Ok(())
         }
@@ -414,24 +566,34 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
         FieldType::Json => validate_string_type(value, &JSON_RE, "json"),
         FieldType::UrlEncoded => validate_string_type(value, &URLENCODED_RE, "urlencoded"),
         FieldType::Lat => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for lat".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for lat".into()))?;
             if let Ok(f) = s.parse::<f64>() {
                 if (-90.0..=90.0).contains(&f) {
                     Ok(())
                 } else {
-                    Err(ValidationError::Custom(format!("Latitude out of range: {}", f)))
+                    Err(ValidationError::Custom(format!(
+                        "Latitude out of range: {}",
+                        f
+                    )))
                 }
             } else {
                 Err(ValidationError::Custom(format!("Invalid latitude: {}", s)))
             }
         }
         FieldType::Lng => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for lng".into()))?;
+            let s = value
+                .as_str()
+                .ok_or(ValidationError::Custom("Not string for lng".into()))?;
             if let Ok(f) = s.parse::<f64>() {
                 if (-180.0..=180.0).contains(&f) {
                     Ok(())
                 } else {
-                    Err(ValidationError::Custom(format!("Longitude out of range: {}", f)))
+                    Err(ValidationError::Custom(format!(
+                        "Longitude out of range: {}",
+                        f
+                    )))
                 }
             } else {
                 Err(ValidationError::Custom(format!("Invalid longitude: {}", s)))
@@ -445,7 +607,9 @@ pub fn validate_type(value: &Value, t: &FieldType) -> Result<()> {
         FieldType::Alpha => validate_string_type(value, &ALPHA_RE, "alpha"),
         FieldType::Alphanumeric => validate_string_type(value, &ALPHANUMERIC_RE, "alphanumeric"),
         FieldType::Custom(pattern) => {
-            let s = value.as_str().ok_or(ValidationError::Custom("Not string for custom regex".into()))?;
+            let s = value.as_str().ok_or(ValidationError::Custom(
+                "Not string for custom regex".into(),
+            ))?;
             let re = {
                 let mut cache = REGEX_CACHE.lock().unwrap();
                 if let Some(r) = cache.get(pattern) {
@@ -512,10 +676,19 @@ pub fn validate_rule(rule_str: &str, value_str: &str) -> bool {
     validate_field(&mut wrapped_value, &rule_ast).is_ok()
 }
 
-fn convert_input_to_value(input: &str, target_type: &FieldType) -> std::result::Result<Value, String> {
+fn convert_input_to_value(
+    input: &str,
+    target_type: &FieldType,
+) -> std::result::Result<Value, String> {
     match target_type {
-        FieldType::Int => input.parse::<i64>().map(Value::Int).map_err(|e| e.to_string()),
-        FieldType::Float => input.parse::<f64>().map(Value::Float).map_err(|e| e.to_string()),
+        FieldType::Int => input
+            .parse::<i64>()
+            .map(Value::Int)
+            .map_err(|e| e.to_string()),
+        FieldType::Float => input
+            .parse::<f64>()
+            .map(Value::Float)
+            .map_err(|e| e.to_string()),
         FieldType::Bool => match input.to_lowercase().as_str() {
             "true" | "1" => Ok(Value::Bool(true)),
             "false" | "0" => Ok(Value::Bool(false)),

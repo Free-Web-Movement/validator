@@ -137,7 +137,11 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("cannot apply range constraint"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("cannot apply range constraint")
+        );
     }
 
     // --- 5. 字符串长度解析失败 ---
@@ -161,7 +165,11 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Failed to parse 'abc' as usize"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Failed to parse 'abc' as usize")
+        );
     }
 
     #[test]
@@ -218,7 +226,11 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Invalid max value type"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Invalid max value type")
+        );
     }
 
     // --- 1. 类型不匹配 (Not float) ---
@@ -286,7 +298,11 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Invalid min value type in range"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Invalid min value type in range")
+        );
     }
 
     // --- 5. 非法 Max 边界类型 (Invalid max value type) ---
@@ -309,6 +325,10 @@ mod range_error_tests {
 
         let res = validate_field(&mut data, &rule);
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("Invalid max value type in range"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("Invalid max value type in range")
+        );
     }
 }
