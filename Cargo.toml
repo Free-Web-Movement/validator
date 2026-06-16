@@ -12,3 +12,4 @@ authors = ["Eric <calidion@gmail.com>"]
 regex = "1.11"
 url = "2.5.8"
 once_cell = "1.21"
+tracing = "0.1"
