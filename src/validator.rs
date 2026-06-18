@@ -104,52 +104,68 @@ pub type Result<T> = std::result::Result<T, ValidationError>;
 /// -----------------------------
 /// Pre-compiled Regexes
 /// -----------------------------
-static EMAIL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").expect("invalid regex"));
+static EMAIL_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").expect("invalid regex"));
 static UUID_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$")
         .expect("invalid regex")
 });
 static IP_V4_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$").expect("invalid regex")
+    Regex::new(r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$")
+        .expect("invalid regex")
 });
 static IP_V6_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$").expect("invalid regex"));
 static MAC_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$").expect("invalid regex"));
-static DATE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("invalid regex"));
+static DATE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("invalid regex"));
 static DATETIME_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$").expect("invalid regex"));
-static TIME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\d{2}:\d{2}:\d{2}$").expect("invalid regex"));
+static TIME_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\d{2}:\d{2}:\d{2}$").expect("invalid regex"));
 static COLOR_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$").expect("invalid regex"));
 static HOSTNAME_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$").expect("invalid regex")
+    Regex::new(r"^(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$")
+        .expect("invalid regex")
 });
-static SLUG_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("invalid regex"));
+static SLUG_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("invalid regex"));
 static HEX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-fA-F]+$").expect("invalid regex"));
-static BASE64_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Za-z0-9+/]+={0,2}$").expect("invalid regex"));
-static PHONE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\+?[1-9]\d{1,14}$").expect("invalid regex"));
-static CREDITCARD_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9]{13,19}$").expect("invalid regex"));
-static ISBN_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(?:ISBN-?1[03]:? )?(?:97[89]-?)?[0-9]{9}[0-9X]$").expect("invalid regex"));
+static BASE64_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[A-Za-z0-9+/]+={0,2}$").expect("invalid regex"));
+static PHONE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\+?[1-9]\d{1,14}$").expect("invalid regex"));
+static CREDITCARD_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[0-9]{13,19}$").expect("invalid regex"));
+static ISBN_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(?:ISBN-?1[03]:? )?(?:97[89]-?)?[0-9]{9}[0-9X]$").expect("invalid regex")
+});
 static PORT_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
         r"^(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
     )
     .expect("invalid regex")
 });
-static JSON_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"^[\[\]{}:,0-9"'\s-]+$"#).expect("invalid regex"));
-static URLENCODED_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9._~-%]+$").expect("invalid regex"));
+static JSON_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"^[\[\]{}:,0-9"'\s-]+$"#).expect("invalid regex"));
+static URLENCODED_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-zA-Z0-9._~-%]+$").expect("invalid regex"));
 static SEMVER_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$").expect("invalid regex")
 });
 static USERNAME_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9_-]{2,19}$").expect("invalid regex"));
-static COUNTRYCODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Z]{2}$").expect("invalid regex"));
-static POSTALCODE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Z0-9]{3,10}$").expect("invalid regex"));
-static FILEPATH_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(?:[a-zA-Z]:)?[/\w.-]+$").expect("invalid regex"));
+static COUNTRYCODE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[A-Z]{2}$").expect("invalid regex"));
+static POSTALCODE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[A-Z0-9]{3,10}$").expect("invalid regex"));
+static FILEPATH_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:[a-zA-Z]:)?[/\w.-]+$").expect("invalid regex"));
 static ALPHA_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z]+$").expect("invalid regex"));
-static ALPHANUMERIC_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9]+$").expect("invalid regex"));
+static ALPHANUMERIC_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-zA-Z0-9]+$").expect("invalid regex"));
 
 /// -----------------------------
 /// Validator
